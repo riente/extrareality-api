@@ -104,7 +104,7 @@ class Client
             'quest_id' => $quest_id,
             'datetime' => $date,
         ]);
-        $result = $this->get('schedule', $params);
+        $result = $this->get('reviews', $params);
 
         return json_decode($result, true);
     }
