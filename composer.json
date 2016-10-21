@@ -1,0 +1,20 @@
+{
+  "name": "extrareality/api-client",
+  "version": "dev-master",
+  "authors": [
+    {
+      "name": "Artur Semyonov",
+      "email": "info@extrareality.by",
+      "homepage": "http://extrareality.by",
+      "role": "Developer"
+    }
+  ],
+  "support": {
+    "email": "info@extrareality.by"
+  },
+  "autoload": {
+    "psr-4": {
+      "Extrareality\\": "src/"
+    }
+  }
+}
