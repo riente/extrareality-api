@@ -146,7 +146,8 @@ class Client
             'signature' => $this->generateSignature($params['datetime'], $quest_id),
         ));
 
-        $curl = curl_init(static::API_URL . $endPoint);
+        $url = static::API_URL . $endPoint;
+        $curl = curl_init($url);
 
         curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($curl, CURLOPT_HEADER, false);
@@ -156,6 +157,9 @@ class Client
         if (static::METHOD_POST == $method) {
             curl_setopt($curl, CURLOPT_POST, true);
             curl_setopt($curl, CURLOPT_POSTFIELDS, $params);
+        } else {
+            $query = http_build_query($params);
+            curl_setopt($curl, CURLOPT_URL, $url . '?' . $query);
         }
 
         $result = curl_exec($curl);
