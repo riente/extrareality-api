@@ -18,6 +18,7 @@ class ApiRequest
     protected $isPay;
     protected $isSchedule;
     protected $questId;
+    /** @var mixed $secret Salt needed to generate signature (provided by Extrareality) */
     protected $secret;
 
     /**

@@ -30,10 +30,10 @@ class Client
      */
     public function book($datetime, $questId = null)
     {
-        return $this->post('book', array(
+        return $this->post('book', [
             'datetime' => $datetime,
             'quest_id' => $questId,
-        ));
+        ]);
     }
 
     public function pay($datetime, $questId = null)
@@ -51,10 +51,10 @@ class Client
     public function cancel($datetime, $questId = null)
     {
         try {
-            $this->post('cancel', array(
+            $this->post('cancel', [
                 'datetime' => $datetime,
                 'quest_id' => $questId,
-            ));
+            ]);
         } catch (ExtrarealityException $e) {
             return false;
         }
@@ -69,10 +69,10 @@ class Client
      */
     public function check($datetime, $questId = null)
     {
-        $result = $this->post('check', array(
+        $result = $this->post('check', [
             'datetime' => $datetime,
             'quest_id' => $questId,
-        ));
+        ]);
 
         return json_decode($result, true);
     }
@@ -84,10 +84,10 @@ class Client
      */
     public function schedule($date, $questId)
     {
-        $result = $this->get('schedule', array(
+        $result = $this->get('schedule', [
             'quest_id' => $questId,
             'datetime' => $date,
-        ));
+        ]);
 
         return json_decode($result, true);
     }
@@ -98,7 +98,7 @@ class Client
      * @param array  $params   Может иметь параметры "newer_than_id", "quantity", "rating_threshold"
      * @return mixed
      */
-    public function reviews($date, $questId, array $params = array())
+    public function reviews($date, $questId, array $params = [])
     {
         $params = array_merge($params, [
             'quest_id' => $questId,
@@ -128,7 +128,7 @@ class Client
      * @return mixed
      * @throws ExtrarealityException
      */
-    private function request($method, $endPoint, array $params = array())
+    private function request($method, $endPoint, array $params = [])
     {
         if (empty($this->questId) && !isset($params['quest_id'])) {
             throw new ExtrarealityException('Параметр quest_id должен быть указан.');
@@ -140,11 +140,11 @@ class Client
 
         $questId = isset($params['quest_id']) ? $params['quest_id'] : $this->questId;
 
-        $params = array_merge($params, array(
+        $params = array_merge($params, [
             'quest_id' => $questId,
             'owner_id' => $this->ownerId,
             'signature' => $this->generateSignature($params['datetime'], $questId),
-        ));
+        ]);
 
         $url = static::API_URL.$endPoint;
         $curl = curl_init($url);
@@ -181,7 +181,7 @@ class Client
      * @return mixed
      * @throws ExtrarealityException
      */
-    private function get($endPoint, array $params = array())
+    private function get($endPoint, array $params = [])
     {
         return $this->request(static::METHOD_GET, $endPoint, $params);
     }
@@ -192,7 +192,7 @@ class Client
      * @return mixed
      * @throws ExtrarealityException
      */
-    private function post($endPoint, array $params = array())
+    private function post($endPoint, array $params = [])
     {
         return $this->request(static::METHOD_POST, $endPoint, $params);
     }
