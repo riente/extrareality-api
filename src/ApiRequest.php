@@ -137,6 +137,11 @@ class ApiRequest
         $uri = explode('/', $uri);
         $method = end($uri);
 
+        if (strpos($method, '?') !== false) {
+            $method = explode('?', $method, 2);
+            $method = $method[0];
+        }
+
         $this->isBooking = false;
         $this->isCancel = false;
         $this->isCheck = false;
