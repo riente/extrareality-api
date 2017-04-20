@@ -1,7 +1,7 @@
 Extrareality API Client
 =======
 
-Примеры использования будут позже.
+Примеры в конце документа.
 
 Подробнее об API
 =======
@@ -85,3 +85,56 @@ https://extrareality.by/api/schedule
 Возвращает массив в json, в котором ключ это точные дата и время, а значение - массив в виде [time => ..., name => ..., phone => ...]
 
 Кто подключает взаимодействие с нами у себя на сайте, с вашей стороны в идеале хотелось бы тоже иметь возможность вызывать такие же методы, которые возвращают данные в таком же формате.
+
+Примеры
+---
+
+К примеру на вашем сайте происходит бронь, и вы хотите "уведомить" об этом Extrareality.
+
+```php
+use Extrareality\Client;
+
+$config = [
+    'secret' => 'somesecretkey', // его вам нужно узнать у нас
+    'ownerId' => 123, // ID вашего квеструма в нашей базе (тоже спросите у нас)
+];
+
+$questId = 5; // ID квеста в вашей базе (если он отличается от нашего, имеет смысл сообщить его нам, тогда мы будет отправлть именно его
+$datetime = '2017-04-20 09:00:00'; // время, на которое бронируется квест
+
+try {
+    $client = new Client($config['ownerId'], $config['secret'], $questId);
+    $client->book($datetime, $quest_id);
+} catch (Exception $e) {
+    // handle possible exceptions
+}
+```
+
+Также вы хотите получать и обрабатывать запросы от Extrareality. У вас есть контроллер по адресу http://somesite.ru/api и, скажем, все запросы (вроде /api/book, /api/check, /api/schedule и прочие) направляются на него.
+
+```php
+use Extrareality\ApiRequest;
+
+$config = [
+    'secret' => 'somesecretkey', // его вам нужно узнать у нас
+];
+
+$request = new ApiRequest($config['secret']);
+
+try {
+    $api = new ApiRequest($config['secret']);
+    if ($api->isBooking()) {
+        // coming soon
+    } elseif ($api->isCancel()) {
+        // ...
+	} elseif ($api->isSchedule()) {
+        // ...
+	} elseif ($api->isCheck()) {
+        // ...
+    }
+} catch (Exception $e) {
+   // handle
+}
+```
+
+Чуть позже будут более подробные примеры.
