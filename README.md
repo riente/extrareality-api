@@ -114,6 +114,7 @@ try {
 
 ```php
 use Extrareality\ApiRequest;
+use Extrareality\Response\ScheduleResponse;
 
 $config = [
     'secret' => 'somesecretkey', // его вам нужно узнать у нас
@@ -127,9 +128,26 @@ try {
         // coming soon
     } elseif ($api->isCancel()) {
         // ...
-	} elseif ($api->isSchedule()) {
-        // ...
-	} elseif ($api->isCheck()) {
+    } elseif ($api->isSchedule()) {
+        $response = new ScheduleResponse();
+        
+        // Pseudocode
+        $myBookings = getBookingRecords();
+        foreach ($myBookings as $booking) {
+            $response->addBookingToSchedule(
+                new \DateTime($booking->getTimestamp()),
+                $booking->getName(),
+                $booking->getPhone()
+            );
+        }
+
+        $response->prepare();
+
+        http_response_code($response->getCode());
+        header('Content-Type: '.$response->getContentType().'; charset=utf-8');
+        echo $response->getMessage();
+        exit;
+    } elseif ($api->isCheck()) {
         // ...
     }
 } catch (Exception $e) {

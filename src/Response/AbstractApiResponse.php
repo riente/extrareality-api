@@ -11,8 +11,8 @@ abstract class AbstractApiResponse
     const TYPE_JSON = 'application/json';
 
     protected $contentType = 'text/html';
-    protected $code;
-    protected $message;
+    protected $code = 200;
+    protected $message = 'OK';
     protected $bookings = [];
 
     public function getCode()

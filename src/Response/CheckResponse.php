@@ -8,6 +8,8 @@ namespace Extrareality\Response;
  */
 class CheckResponse extends AbstractApiResponse
 {
+    protected $contentType = self::TYPE_JSON;
+
     /**
      * @param bool  $isBooked     If a booking record exists
      * @param mixed $bookingName  Person's name; considered only if $isBooked is true
