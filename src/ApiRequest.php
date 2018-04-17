@@ -20,10 +20,13 @@ class ApiRequest
     protected $questId;
     /** @var mixed $secret Salt needed to generate signature (provided by Extrareality) */
     protected $secret;
+    protected $source;
 
     /**
      * ApiRequest constructor.
+     *
      * @param mixed $secret
+     * @throws ExtrarealityException
      */
     public function __construct($secret)
     {
@@ -50,7 +53,24 @@ class ApiRequest
     }
 
     /**
+     * Gets the source of request.
+     *
+     * @return mixed
+     * @throws ExtrarealityException
+     */
+    public function getSource()
+    {
+        if (is_null($this->source)) {
+            // If the request is processed, then source should be at least "extrareality"
+            $this->processRequest();
+        }
+
+        return $this->source;
+    }
+
+    /**
      * @return bool
+     * @throws ExtrarealityException
      */
     public function isBooking()
     {
@@ -63,6 +83,7 @@ class ApiRequest
 
     /**
      * @return bool
+     * @throws ExtrarealityException
      */
     public function isCancel()
     {
@@ -75,6 +96,7 @@ class ApiRequest
 
     /**
      * @return bool
+     * @throws ExtrarealityException
      */
     public function isCheck()
     {
@@ -87,6 +109,7 @@ class ApiRequest
 
     /**
      * @return bool
+     * @throws ExtrarealityException
      */
     public function isPay()
     {
@@ -99,6 +122,7 @@ class ApiRequest
 
     /**
      * @return bool
+     * @throws ExtrarealityException
      */
     public function isSchedule()
     {
@@ -120,6 +144,12 @@ class ApiRequest
         $ownerId = (int) $_REQUEST['owner_id'];
         $this->questId = (int) $_REQUEST['quest_id'];
         $datetime = $_REQUEST['datetime'];
+
+        if (!empty($_REQUEST['source'])) {
+            $this->source = $_REQUEST['source'];
+        } else {
+            $this->source = 'extrareality';
+        }
 
         // Проверяем подпись
         if ($signature != sha1($datetime . $this->questId . $ownerId . $this->secret)) {

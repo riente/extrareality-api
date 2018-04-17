@@ -104,6 +104,9 @@ $datetime = '2017-04-20 09:00:00'; // время, на которое брони
 
 try {
     $client = new Client($config['ownerId'], $config['secret'], $questId);
+    // Optionally you can set a custom source or API URL
+    // $client->setSource('yoursitename');
+    // $client->setApiUrl('https://partner.site/api/');
     $client->book($datetime, $quest_id);
 } catch (Exception $e) {
     // handle possible exceptions

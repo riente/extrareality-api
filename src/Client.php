@@ -16,6 +16,11 @@ class Client
     protected $ownerId;
     protected $secret;
 
+    /** @var mixed $url Custom API URL (if is sent to a site other than ER) */
+    protected $url;
+    /** @var mixed $source If sent from a site different from ER, we can indicate source */
+    protected $source;
+
     public function __construct($ownerId, $secret, $questId = null)
     {
         $this->ownerId = $ownerId;
@@ -24,9 +29,30 @@ class Client
     }
 
     /**
+     * @param string $source
+     */
+    public function setSource($source)
+    {
+        $this->source = $source;
+    }
+
+    /**
+     * @param string $url
+     */
+    public function setApiUrl($url)
+    {
+        if (empty($url)) {
+            return;
+        }
+
+        $this->url = rtrim($url, '/').'/';
+    }
+
+    /**
      * @param string   $datetime
      * @param int|null $questId
      * @return mixed
+     * @throws ExtrarealityException
      */
     public function book($datetime, $questId = null)
     {
@@ -66,6 +92,7 @@ class Client
      * @param string $datetime
      * @param null   $questId
      * @return mixed
+     * @throws ExtrarealityException
      */
     public function check($datetime, $questId = null)
     {
@@ -81,6 +108,7 @@ class Client
      * @param string $date
      * @param int    $questId
      * @return mixed
+     * @throws ExtrarealityException
      */
     public function schedule($date, $questId)
     {
@@ -97,6 +125,7 @@ class Client
      * @param int    $questId
      * @param array  $params   Может иметь параметры "newer_than_id", "quantity", "rating_threshold"
      * @return mixed
+     * @throws ExtrarealityException
      */
     public function reviews($date, $questId, array $params = [])
     {
@@ -144,9 +173,10 @@ class Client
             'quest_id' => $questId,
             'owner_id' => $this->ownerId,
             'signature' => $this->generateSignature($params['datetime'], $questId),
+            'source' => (!empty($this->source) ? $this->source : 'extrareality'),
         ]);
 
-        $url = static::API_URL.$endPoint;
+        $url = (!empty($this->url) ? $this->url : static::API_URL).$endPoint;
         $curl = curl_init($url);
 
         curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
