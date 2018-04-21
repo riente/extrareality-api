@@ -62,6 +62,20 @@ class Client
         ]);
     }
 
+    /**
+     * @param array    $scheduleData
+     * @param int|null $questId
+     * @return mixed
+     * @throws ExtrarealityException
+     */
+    public function updateSchedule(array $scheduleData, $questId = null)
+    {
+        return $this->postBody('update_schedule', json_encode($scheduleData), [
+            'datetime' => date('Y-m-d H:i:s'),
+            'quest_id' => $questId,
+        ]);
+    }
+
     public function pay($datetime, $questId = null)
     {
         // TBD
@@ -159,13 +173,7 @@ class Client
      */
     private function request($method, $endPoint, array $params = [])
     {
-        if (empty($this->questId) && !isset($params['quest_id'])) {
-            throw new ExtrarealityException('Параметр quest_id должен быть указан.');
-        }
-
-        if (!isset($params['datetime'])) {
-            throw new ExtrarealityException('Параметр datetime должен быть указан.');
-        }
+        $this->checkParams($params);
 
         $questId = isset($params['quest_id']) ? $params['quest_id'] : $this->questId;
 
@@ -225,5 +233,68 @@ class Client
     private function post($endPoint, array $params = [])
     {
         return $this->request(static::METHOD_POST, $endPoint, $params);
+    }
+
+    /**
+     * @param string $endPoint
+     * @param string $body
+     * @param array $params
+     * @return mixed
+     * @throws ExtrarealityException
+     */
+    private function postBody($endPoint, $body, array $params = [])
+    {
+        $this->checkParams($params);
+
+        $questId = isset($params['quest_id']) ? $params['quest_id'] : $this->questId;
+
+        $params = array_merge($params, [
+            'quest_id' => $questId,
+            'owner_id' => $this->ownerId,
+            'signature' => $this->generateSignature($params['datetime'], $questId),
+            'source' => (!empty($this->source) ? $this->source : 'extrareality'),
+        ]);
+
+        $url = (!empty($this->url) ? $this->url : static::API_URL).$endPoint;
+        $url .= '?'.http_build_query($params);
+        $curl = curl_init($url);
+
+        curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($curl, CURLOPT_HEADER, false);
+        curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'Content-Length: '.mb_strlen($body, 'utf-8')
+        ]);
+
+        $result = curl_exec($curl);
+        $info = curl_getinfo($curl);
+        $code = $info['http_code'];
+
+        curl_close($curl);
+
+        if ($code != 200) {
+            throw new ExtrarealityException($result, $code);
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param array $params
+     * @throws ExtrarealityException
+     */
+    private function checkParams(array $params = [])
+    {
+        if (empty($this->questId) && !isset($params['quest_id'])) {
+            throw new ExtrarealityException('Параметр quest_id должен быть указан.');
+        }
+
+        if (!isset($params['datetime'])) {
+            throw new ExtrarealityException('Параметр datetime должен быть указан.');
+        }
     }
 }
