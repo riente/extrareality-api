@@ -111,7 +111,7 @@ https://extrareality.by/api/update_schedule?quest_id=...&owner_id=...&datetime=.
 ```json
 {
   "priceTemplates": {
-    "Цены детских квестов": [
+    "Цена по будням": [
       {
         "name": "2 человека",
         "price": 150.0,
@@ -122,27 +122,56 @@ https://extrareality.by/api/update_schedule?quest_id=...&owner_id=...&datetime=.
         "price": 170.0,
         "currency": "BYN"
       }
+    ],
+    "Цена по выходным": [
+      {
+        "name": "2 человека",
+        "price": 160.0,
+        "currency": "BYN"
+      },
+      {
+        "name": "3 человека",
+        "price": 180.0,
+        "currency": "BYN"
+      }
     ]
   },
 
   "slotTemplates": {
-    "Стандартный": [
+    "Будни": [
       {
         "slotTime": "15:00",
-        "priceTemplate": "Цены детских квестов",
+        "priceTemplate": "Цена по будням",
         "comments": ""
       },
       {
         "slotTime": "16:30",
-        "priceTemplate": "Цены детских квестов",
+        "priceTemplate": "Цена по будням",
         "comments": "Если одного из вас зовут Тедом, будет скидка"
+      }
+    ],
+    "Выходные": [
+      {
+        "slotTime": "15:00",
+        "priceTemplate": "Цена по выходным",
+        "comments": ""
+      },
+      {
+        "slotTime": "16:30",
+        "priceTemplate": "Цена по выходным"
+      },
+      {
+        "slotTime": "18:30",
+        "priceTemplate": "Цена по выходным"
       }
     ]
   },
 
   "schedule": {
-    "1": "Стандартный",
-    "2018-05-09": "Стандартный",
+    "1": "Будни",
+    "2": "Будни",
+    "6": "Выходные",
+    "2018-05-09": "Выходные",
     "7": false,
     "2018-05-10": false
   }
@@ -172,10 +201,10 @@ $curl = curl_init($url);
 curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
 curl_setopt($curl, CURLOPT_HEADER, false);
 curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
-curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
-curl_setopt($ch, CURLOPT_HTTPHEADER, [
+curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($curl, CURLOPT_CUSTOMREQUEST, 'POST');
+curl_setopt($curl, CURLOPT_POSTFIELDS, $body);
+curl_setopt($curl, CURLOPT_HTTPHEADER, [
 	'Content-Type: application/json',
 	'Content-Length: '.mb_strlen($body, 'utf-8')
 ]);
