@@ -121,14 +121,16 @@ class Client
     /**
      * @param string $date
      * @param int    $questId
+     * @param int    $days
      * @return mixed
      * @throws ExtrarealityException
      */
-    public function schedule($date, $questId)
+    public function schedule($date, $questId, $days = 1)
     {
         $result = $this->get('schedule', [
             'quest_id' => $questId,
             'datetime' => $date,
+            'days' => $days,
         ]);
 
         return json_decode($result, true);
