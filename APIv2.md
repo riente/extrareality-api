@@ -50,7 +50,6 @@ md5($datetime . $secret)
        "date": "2016-05-05",
        "time": "18:30",
        "is_free": true,
-       "price": 3000,
        "extraPrices": {
            "2 человека": 80,
            "Больше 2 человек": 110
@@ -61,7 +60,6 @@ md5($datetime . $secret)
        "date": "2016-05-05",
        "time": "20:00",
        "is_free": false,
-       "price": 3500,
        "extraPrices": {
            "2 человека": 70,
            "Больше 2 человек": 100
@@ -80,7 +78,7 @@ md5($datetime . $secret)
 
 * comment - комментарий от клиента (если есть)
 * datetime - дата и время игры в формате "Y-m-d H:i:s"
-* email
+* email - может содержать null, так что учитывайте это при в ставке в вашу БД
 * name - имя клиента
 * phone - телефон клиента
 * players_num - количество игроков
