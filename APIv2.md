@@ -112,7 +112,7 @@ POST https://superquestsite.com/api/quest2/book
 
 name=Иван
     &comment=Комментарий
-    &datetime=2019-05-01 20:00
+    &datetime=2019-05-01 20:00:00
     &email=test@tut.by
     &our_time_id=124
     &phone=375291234567
