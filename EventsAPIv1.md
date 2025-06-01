@@ -88,6 +88,7 @@ Array of objects, each one containing the event data
              { id: 123, name: "Cats", status: 'reserve", players: 7, email: null }
         ],
         form: {
+            openTime: "2025-05-05 12:00:00",
             endpoint: {
                 url: "https://your-site.com/reg/1",
                 mehtod: "POST",
@@ -121,7 +122,7 @@ Array of objects, each one containing the event data
 }
 ```
 
-### Fields description
+### Properties description
 
 | Field                             | Required | Default | Description                                              |
 |-----------------------------------|----------|---------|----------------------------------------------------------|
@@ -142,6 +143,7 @@ Array of objects, each one containing the event data
 | registration.maxPlayersInTeam     | false    |         | Max number of players on the team                        |
 | registration.teams                | false    |         | Described below                                          |
 | registration.form                 | false    |         | You can provide it if you want us to send you leads      |
+| registration.form.openTime        | false    | now     | When the form becomes available, format is "Y-m-d H:i:s" |
 | registration.form.endpoint        | false    |         | Object describing the URL and format of our requests     |
 | registration.form.endpoint.url    | false    |         | URL of your site to which we'll send the requests        |
 | registration.form.endpoint.method | false    | POST    | HTTP method                                              |
