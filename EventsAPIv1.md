@@ -31,7 +31,18 @@ You'll have to develop several endpoints:
 
 ## Events List
 
-Array of objects, each one containing the event data
+It is presumed that all the events on the list are held in one city (or online).
+
+You can create several endpoints for each city if you need, or make it accept some parameters.
+For example:
+
+```
+https://your-site.com/api/events/city1
+https://your-site.com/api/events?city=1
+https://your-site.com/api/events?city=2
+```
+
+Array of objects, each one containing the event data.
 
 ```
 [
@@ -76,7 +87,6 @@ Array of objects, each one containing the event data
 {
     id: 1,
     type: online,
-    city: null,
     game: "https://your-site.com/api/games/1",
     location: "Your home",
     coordinates: { lat: "", long: "" },
@@ -219,6 +229,12 @@ In case of successful processing, you return the following JSON response:
 
 ```json
 {"success": true}
+```
+
+If you need the user to pay online for this event, you can also provide a "payUrl" with the response:
+
+```json
+{"success": true, "payUrl": "https://someurl.com/pay/123"}
 ```
 
 In case of error:
