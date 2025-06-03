@@ -108,6 +108,7 @@ Array of objects, each one containing the event data.
             maxPlayersInTeam: 10,
             fields: [
                 { type: "text", name: "team_name", required: true, title: "Team Name", description: null, max: 20 },
+                { type: "textarea", name: "comment", required: false, title: "Comment", description: null, max: 200 },
                 { type: "number", name: "players_num", required: true, title: "Players", description: null, max: 10 },
                 { type: "phone", name: "phone", required: true, title: "Your phone", description: null },
                 { type: "email", name: "email", required: true, title: "Your email", description: "We'll send links" },
@@ -176,22 +177,23 @@ It is an array of objects, each describing a single form field that we'll use to
 
 #### Field object
 
-| Property    | Required | Description                                                                              |
-|-------------|----------|------------------------------------------------------------------------------------------|
-| type        | true     | Possible values: text, number, phone, email, radio, select, checkbox, checkboxes, hidden |
-| name        | true     | Field's "name" attribute, the var name that we'll send to you                            |
-| value       | false    | Predefined value for checkboxes or hidden fields                                         |
-| required    | true     | Boolean, whether the field is required                                                   |
-| title       | true     | The field's title, which the user can see on the UI                                      |
-| description | false    | May be provided if you wish to describe the field better                                 |
-| max         | false    | Available for "text" (max characters) and "number" (max numeric value)                   |
-| variants    | false    | Available for "radio", "select", "checkboxes"                                            |
+| Property    | Required | Description                                                                                        |
+|-------------|----------|----------------------------------------------------------------------------------------------------|
+| type        | true     | Possible values: text, textarea, number, phone, email, radio, select, checkbox, checkboxes, hidden |
+| name        | true     | Field's "name" attribute, the var name that we'll send to you                                      |
+| value       | false    | Predefined value for checkboxes or hidden fields                                                   |
+| required    | true     | Boolean, whether the field is required                                                             |
+| title       | true     | The field's title, which the user can see on the UI                                                |
+| description | false    | May be provided if you wish to describe the field better                                           |
+| max         | false    | Available for "text" (max characters) and "number" (max numeric value)                             |
+| variants    | false    | Available for "radio", "select", "checkboxes"                                                      |
 
 #### Descriptions by type
 
 | Type       | Description                                                                               |
 |------------|-------------------------------------------------------------------------------------------|
 | text       | A simple text input                                                                       |
+| textarea   | A textarea input                                                                          |
 | number     | A numeric input which accepts only numbers                                                |
 | phone      | A text input which ensures the value is a valid phone                                     |
 | email      | A text input which ensures the value is a valid email                                     |
