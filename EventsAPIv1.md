@@ -20,6 +20,8 @@ Used parameters:
 * datetime — in this format "Y-m-d H:i:s" (i.e., yyyy-mm-dd hh:mm:ss)
 * secret — we can generate a random one or decide on it with you beforehand
 
+You should always respond with HTTP status code 200 to any request.
+
 ## Quick links
 
 You'll have to develop several endpoints:
@@ -244,3 +246,5 @@ In case of error:
 ```json
 {"success":false, "message": "Your phone is incorrect"}
 ```
+
+**Important!** Note that event in case of errors you must always return HTTP 200 status code.
