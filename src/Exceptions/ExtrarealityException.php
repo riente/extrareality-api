@@ -2,7 +2,8 @@
 
 namespace Extrareality\Exceptions;
 
+use Exception;
 
-class ExtrarealityException extends \Exception
+class ExtrarealityException extends Exception
 {
 }
