@@ -2,7 +2,7 @@
 
 namespace Extrareality\Enums;
 
-enum EndpointMethod: string
+enum HttpMethod: string
 {
     case GET = 'GET';
     case POST = 'POST';

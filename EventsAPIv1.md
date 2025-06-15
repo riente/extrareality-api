@@ -103,7 +103,7 @@ Array of objects, each one containing the event data.
             openTime: "2025-05-05 12:00:00",
             endpoint: {
                 url: "https://your-site.com/reg/1",
-                mehtod: "POST",
+                method: "POST",
                 format: "json"
             },
             maxTeams: 20,
