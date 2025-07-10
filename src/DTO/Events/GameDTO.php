@@ -2,9 +2,9 @@
 
 namespace Extrareality\DTO\Events;
 
-use JsonSerializable;
+use Extrareality\DTO\Common\AbstractApiDTO;
 
-class GameDTO implements JsonSerializable
+class GameDTO extends AbstractApiDTO
 {
     public int $id;
     public string $brand;
@@ -30,5 +30,9 @@ class GameDTO implements JsonSerializable
             'img' => $this->img,
             'description' => $this->description,
         ]);
+    }
+
+    public static function fromArray(array $data = []): GameDTO
+    {
     }
 }

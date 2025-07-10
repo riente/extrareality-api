@@ -1,15 +1,14 @@
 <?php
 
-namespace Extrareality\DTO\Events;
+namespace Extrareality\DTO\Games;
 
-use Extrareality\Enums\PriceType;
 use JsonSerializable;
 
-class PriceDTO implements JsonSerializable
+class GamePriceDTO implements JsonSerializable
 {
     public int|float $amount = 0;
     public string $currency = 'EUR';
-    public PriceType $per = PriceType::TEAM;
+    public ?string $description = null;
 
     public function __construct(array $data = [])
     {
@@ -21,8 +20,8 @@ class PriceDTO implements JsonSerializable
             $this->currency = (string) $data['currency'];
         }
 
-        if (!empty($data['per'])) {
-            $this->per = PriceType::castToEnum($data['per']);
+        if (!empty($data['description'])) {
+            $this->description = $data['description'];
         }
     }
 
@@ -31,7 +30,7 @@ class PriceDTO implements JsonSerializable
         return [
             'amount' => $this->amount,
             'currency' => $this->currency,
-            'per' => $this->per->value,
+            'description' => $this->description,
         ];
     }
 }
