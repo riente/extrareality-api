@@ -91,9 +91,34 @@ class FormDTO implements JsonSerializable
                 required: (bool) ($field['required'] ?? false),
                 description: $field['description'] ?? null,
                 variants: $field['variants'] ?? null,
+                value: self::readValue($field['value'] ?? null),
+                max: self::readMax($field['max'] ?? null),
             );
         }
 
         return $fields;
+    }
+
+    /**
+     * The value travels back to the partner in the registration body, so whatever scalar they sent
+     * has to survive the trip. A bool reads as the 1/0 the docs show for a checkbox
+     */
+    private static function readValue(mixed $value): int|float|string|null
+    {
+        if (is_bool($value)) {
+            return (int) $value;
+        }
+
+        return is_int($value) || is_float($value) || is_string($value) ? $value : null;
+    }
+
+    private static function readMax(mixed $max): int|float|null
+    {
+        if (!is_numeric($max)) {
+            return null;
+        }
+
+        // A character count is an integer and a price cap may not be, so keep whichever was sent
+        return $max == (int) $max ? (int) $max : (float) $max;
     }
 }

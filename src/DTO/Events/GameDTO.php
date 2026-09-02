@@ -34,5 +34,6 @@ class GameDTO extends AbstractApiDTO
 
     public static function fromArray(array $data = []): GameDTO
     {
+        return new GameDTO($data);
     }
 }

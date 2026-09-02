@@ -16,6 +16,13 @@ class FormFieldDTO
         public bool $required = false,
         public ?string $description = null,
         ?array $variants = null,
+        /**
+         * Predefined value of a "checkbox" or a "hidden" field. It is what we send back under
+         * $name when the form is submitted, so a hidden field without it has nothing to carry
+         */
+        public int|float|string|null $value = null,
+        /** Longest accepted text for "text", largest accepted number for "number" */
+        public int|float|null $max = null,
     ) {
         // If there are variants, check the validity of the structure
         if (!empty($variants)) {
