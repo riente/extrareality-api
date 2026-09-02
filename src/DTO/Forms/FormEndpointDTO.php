@@ -12,6 +12,8 @@ class FormEndpointDTO
         public string $url,
         public HttpMethod $method = HttpMethod::POST,
         public EndpointFormat $format = EndpointFormat::FORM,
+        /** Whether a repeated idempotency_key is guaranteed not to create a second registration */
+        public bool $idempotent = false,
     ) {}
 
     /**
@@ -23,6 +25,13 @@ class FormEndpointDTO
             throw new ExtrarealityException('Missing required "url" parameter');
         }
 
-        return new FormEndpointDTO(...$data);
+        // Mapped field by field: these arrive from JSON as strings, and any extra key a partner
+        // sends would make an argument unpacking here fail
+        return new FormEndpointDTO(
+            $data['url'],
+            HttpMethod::tryFrom(strtoupper((string) ($data['method'] ?? ''))) ?? HttpMethod::POST,
+            EndpointFormat::tryFrom(strtolower((string) ($data['format'] ?? ''))) ?? EndpointFormat::FORM,
+            (bool) ($data['idempotent'] ?? false),
+        );
     }
 }

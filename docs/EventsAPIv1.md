@@ -1,28 +1,19 @@
 # ExtraReality Game Events API v1
 
-We send the following parameters with each request:
+## Request verification
 
-* datetime (just the timestamp of current request, for example, "2019-05-01 12:00:00")
-* source
-* signature
+We sign every request we send you, so that you can make sure it really comes from us and never hand
+your data over to a stranger who guessed the URL.
 
-Signature is formed based on a secret key that only you and we know. By verifying this signature, you can make sure that the request is truly from us, although this check is not required. Anyway, it's always better to perform this check so that you don't occasionally output the information to unauthorized users.
+Each request carries the `X-Source`, `X-Timestamp` and `X-Signature-256` headers, where the last one
+is an HMAC-SHA256 of the request keyed with a secret that only you and we know. A deprecated MD5
+`X-Signature` header and the legacy `source` / `datetime` / `signature` request parameters are sent
+alongside, so existing integrations keep working.
 
-The signature is formed in the following manner:
+**Please see [Request verification](RequestVerification.md) for the exact scheme, a ready-to-use PHP
+verification snippet and the pitfalls to avoid.**
 
-```php
-md5($source . $datetime . $secret)
-```
-
-Used parameters:
-
-* source — usually "extrareality" but there may be other sources as well
-* datetime — in this format "Y-m-d H:i:s" (i.e., yyyy-mm-dd hh:mm:ss)
-* secret — we can generate a random one or decide on it with you beforehand
-
-You should always respond with HTTP status code 200 to any request.
-
-**We strongly advise you to check the request signature before processing the request, so that you are sure that the request comes from us.**
+For what to answer, and which status code to answer it with, see [Responses and errors](Responses.md).
 
 ## Quick links
 
@@ -32,6 +23,100 @@ You'll have to develop several endpoints:
 * [Single Event](#single-event)
 * [Single Game Data](#single-game)
 * [Registration](#sign-up-for-an-event)
+* [Participant contacts](#participant-contacts) — only if you want us to email your participants
+
+Please also read [Dates and times](#dates-and-times) and [Event status](#event-status) before you start.
+
+## Dates and times
+
+This applies to every date and time in this API: the event `time`, `registration.form.openTime`
+and any other timestamp you return to us.
+
+**Recommended format** — [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) with an explicit UTC offset:
+
+```
+"2025-05-10T19:00:00+02:00"
+```
+
+**Legacy format** — `"Y-m-d H:i:s"` (i.e., `"2025-05-10 19:00:00"`). Still accepted, so existing
+integrations keep working, but it carries no offset. We interpret such a value as the **local time
+of the place where the event is held**, resolved through the event's `timezone` (see below).
+
+Why it matters: we show your events on sites and apps whose users are not necessarily in your city.
+Without an offset we cannot tell "19:00 in Warsaw" from "19:00 in Minsk", and the user sees the wrong
+time in their own calendar.
+
+### `timezone`
+
+An optional event property containing an [IANA time zone name](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones),
+for example `"Europe/Warsaw"`.
+
+| You return                        | What we do                                                  |
+|-----------------------------------|-------------------------------------------------------------|
+| ISO 8601 with offset              | Use it as is. `timezone` is not needed, but is still useful  |
+| Legacy format + `timezone`        | Resolve the local time through that zone                     |
+| Legacy format, no `timezone`      | Fall back to the default zone agreed with you for the account |
+
+That last row is a guess on our side, so please avoid it.
+
+**For `type: "online"` events always use ISO 8601 with an offset.** There is no "place where the
+event is held" to fall back to, and the audience is spread across zones by definition.
+
+Two more things worth knowing:
+
+* Do not forget DST. If you build the string by hand, `"+02:00"` in July and `"+01:00"` in December
+  are different offsets of the same zone. Letting your date library format the value avoids this.
+* The `datetime` parameter **we** send with our requests keeps the legacy `"Y-m-d H:i:s"` format
+  (in UTC) for backward compatibility. See [Request verification](#request-verification).
+
+## Event status
+
+Plans change: an event gets cancelled, or every seat is taken a week before it starts. The optional
+`status` property tells us which of these happened.
+
+| Value       | Meaning                                                                  |
+|-------------|--------------------------------------------------------------------------|
+| `active`    | The default. The event takes place and accepts registrations as usual    |
+| `soldout`   | The event takes place, but there are no seats left                       |
+| `cancelled` | The event will not take place                                            |
+
+If you omit the property entirely, we treat the event as `active` — so existing integrations that
+know nothing about statuses keep behaving exactly as before.
+
+You can add a `statusComment`: a short human-readable note that we show next to the event, up to 255
+characters, e.g. `"Перенесено на 24 мая"` or `"Sold out, join the waiting list"`.
+
+```
+{
+    id: 1,
+    status: "cancelled",
+    statusComment: "The host got ill, sorry!",
+    ...
+}
+```
+
+### Please do not just remove the event
+
+The tempting alternative is to drop a cancelled event from the list. Please do not, at least until
+its `time` has passed.
+
+An event that vanishes from your feed is indistinguishable from a bad deploy, an expired certificate
+or a timeout on your side — we cannot tell "this event is cancelled" from "this endpoint is broken
+right now". A vanished event also leaves the people who already registered with no explanation
+anywhere, while `cancelled` plus a `statusComment` reaches every place your event was shown.
+
+### What we do with each status
+
+* `active` — the event is listed and the registration form, if any, is shown.
+* `soldout` — the event stays visible, but we hide the registration form and stop sending you leads
+  for it. Use it instead of removing the `registration` object, so the event does not look as if it
+  never accepted registrations at all.
+* `cancelled` — the event is shown as cancelled and we send you no leads for it. We keep displaying
+  it until `time` passes, then drop it.
+
+Because `cancelled` and `soldout` live in a single field, one rule settles the overlap: **a cancelled
+event is `cancelled` even if it was sold out first.** The event not happening is what the user needs
+to know.
 
 ## Events List
 
@@ -53,15 +138,22 @@ Array of objects, each one containing the event data.
     {
         id: 1,
         type: online,
-        game: "https://your-site.com/api/games/1",
+        game: {
+            id: 1,
+            brand: "Connectit",
+            name: "No3. Hunting"
+        },
+        gameUrl: "https://your-site.com/api/games/1",
         location: "Your home",
-        time: "2025-05-10 19:00:00",
+        time: "2025-05-10T19:00:00+02:00",
+        timezone: "Europe/Warsaw",
         price: { amount: 10, currency: "EUR", per: "player" },
         url: "https://your-site.com/api/events/1"
     },
     {
         id: 2,
         type: offline,
+        status: "soldout",
         game: {
             id: 1,
             brand: "Connectit",
@@ -79,9 +171,13 @@ Array of objects, each one containing the event data.
 |--------------|----------|---------------------------------------------------------------------|
 | **id**       | true     | Unique event ID from your system                                    |
 | **type**     | true     | Available values: "online", "offline"                               |
-| **game**     | true     | [Object with game data](#single-game) or string URL to get it       |
+| status       | false    | "active" (default), "soldout" or "cancelled", see [Event status](#event-status) |
+| statusComment| false    | Short note shown next to the event, up to 255 characters            |
+| **game**     | true     | [Object with game data](#single-game), see [Referring to a game](#referring-to-a-game) |
+| gameUrl      | false    | URL to fetch the full [game data](GamesAPIv1.md#single-game)        |
 | **location** | true     | String, where the event takes place                                 |
-| **time**     | true     | When the event is held, format is "Y-m-d H:i:s"                     |
+| **time**     | true     | When the event is held, see [Dates and times](#dates-and-times)      |
+| timezone     | false    | IANA zone name of the event, see [Dates and times](#dates-and-times) |
 | **price**    | true     | Object, better described in [Single Event](#properties-description) |
 | **url**      | true     | URL to [Single Event](#single-event)                                |
 
@@ -91,22 +187,32 @@ Array of objects, each one containing the event data.
 {
     id: 1,
     type: online,
-    game: "https://your-site.com/api/games/1",
+    status: "active",
+    statusComment: null,
+    game: {
+        id: 1,
+        brand: "Connectit",
+        name: "No3. Hunting"
+    },
+    gameUrl: "https://your-site.com/api/games/1",
     location: "Your home",
     coordinates: { lat: "", long: "" },
-    time: "2025-05-10 19:00:00",
+    time: "2025-05-10T19:00:00+02:00",
+    timezone: "Europe/Warsaw",
     price: { amount: 10, currency: "BYN", per: "player" },
     registration: {
+        contactsUrl: "https://your-site.com/api/events/1/contacts",
         teams: [
-             { id: 123, name: "Vasilisy", status: 'confirmed", players: "5-6", email: "some@mail.com" },
-             { id: 123, name: "Cats", status: 'reserve", players: 7, email: null }
+             { id: 123, name: "Vasilisy", status: "confirmed", players: "5-6" },
+             { id: 124, name: "Cats", status: "reserve", players: 7 }
         ],
         form: {
-            openTime: "2025-05-05 12:00:00",
+            openTime: "2025-05-05T12:00:00+02:00",
             endpoint: {
                 url: "https://your-site.com/reg/1",
                 method: "POST",
-                format: "json"
+                format: "json",
+                idempotent: true
             },
             maxTeams: 20,
             maxPlayers: 10,
@@ -143,12 +249,18 @@ Array of objects, each one containing the event data.
 |-----------------------------------|----------|---------|----------------------------------------------------------------|
 | **id**                            | **true** |         | Unique ID from your system                                     |
 | **type**                          | true     |         | Available values: "online", "offline"                          |
-| **game**                          | true     |         | [Object with game data](#single-game) or URL to get it         |
+| status                            | false    | active  | "active", "soldout" or "cancelled"                             |
+|                                   |          |         | See [Event status](#event-status)                              |
+| statusComment                     | false    | null    | Short note shown next to the event, up to 255 characters       |
+| **game**                          | true     |         | [Object with game data](#single-game), see below               |
+| gameUrl                           | false    | null    | URL to fetch the full [game data](GamesAPIv1.md#single-game)   |
 | **location**                      | true     |         | String, where the event takes place                            |
 | coordinates                       | false    | null    | Null or object with required "lat" and "long" properties       |
 | coordinates.lat                   | false    |         | Float value, latitude                                          |
 | coordinates.long                  | false    |         | Float value, longitude                                         |
-| **time**                          | true     |         | Format is "Y-m-d H:i:s"                                        |
+| **time**                          | true     |         | See [Dates and times](#dates-and-times)                        |
+| timezone                          | false    | null    | IANA zone name, e.g. "Europe/Warsaw". Required in practice if  |
+|                                   |          |         | `time` has no UTC offset, see [Dates and times](#dates-and-times) |
 | **price**                         | true     |         | Object                                                         |
 | **price.amount**                  | true     |         | Float or integer value                                         |
 | **price.currency**                | true     |         | [ISO 4217](https://en.wikipedia.org/wiki/ISO_4217)             |
@@ -156,6 +268,8 @@ Array of objects, each one containing the event data.
 | registration                      | false    | null    | Null or object                                                 |
 | registration.maxTeams             | false    |         | Max number of teams                                            |
 | registration.maxPlayersInTeam     | false    |         | Max number of players on the team                              |
+| registration.contactsUrl          | false    | null    | URL we call to fetch the participants' email addresses         |
+|                                   |          |         | See [Participant contacts](#participant-contacts)              |
 | registration.teams                | false    |         | Described below                                                |
 | registration.form                 | false    |         | You can provide it if you want us to send you leads            |
 |                                   |          |         | Thoroughly described in [Form Object](FormObject.md)           |
@@ -167,9 +281,21 @@ Array of objects, each one containing the event data.
 |-------------|----------|---------|--------------------------------------------------------------------|
 | **id**      | true     |         | Unique ID of the registration in your system                       |
 | **name**    | true     |         | Player's or team's name                                            |
-| **status**  | true     | new     | Available values: "new", "confirmed", "reserve", "cancel"          |
+| status      | false    | new     | Available values: "new", "confirmed", "reserve", "cancelled"       |
+|             |          |         | Earlier versions of this page said "cancel"; we still accept it,   |
+|             |          |         | but it is deprecated, please send "cancelled"                      |
 | **players** | true     |         | Number of players on the team                                      |
-| email       | false    |         | Necessary only if you use sending game info emails via our service |
+| ~~email~~   | false    |         | **Deprecated and unsafe here.** See below and                      |
+|             |          |         | [Participant contacts](#participant-contacts)                      |
+
+> **Please stop returning `email` in this object.** This endpoint describes an event, and we may
+> request it without any particular protection. Every address you put here is one guessed URL away
+> from a stranger. If you use our service to email the participants, expose the addresses through
+> [`registration.contactsUrl`](#participant-contacts) instead.
+>
+> We still read `email` from here so that existing integrations keep working. If you cannot migrate
+> yet, then at the very least verify the request signature and return `email` only for requests that
+> pass the check — see [Request verification](RequestVerification.md).
 
 ### `registration.form.fields` description
 
@@ -177,14 +303,127 @@ It is an array of objects, each describing a single form field that we'll use to
 
 Please see [FormObject](FormObject.md#field-object) for details.
 
+## Participant contacts
+
+Sometimes we need the email addresses of the people who registered — to send them the link to an
+online game, the venue address, or a reminder. Those addresses are personal data, and this section
+is about handing them over without leaving them lying around.
+
+**If you would rather not share addresses at all, simply leave `contactsUrl` out and email your
+participants yourself.** Nothing else in this API needs them.
+
+### Why not just put them in the event
+
+The [Single Event](#single-event) response describes an event so that it can be rendered in a
+listing. It is fetched often, it may be cached, and its URL is easy to guess — `/api/events/1`,
+`/api/events/2`, and so on. An `email` field in there turns that endpoint into a downloadable list
+of your customers' addresses for anyone who tries.
+
+Contacts therefore live behind their own URL, which we call only at the moment we actually have
+something to send.
+
+### The endpoint
+
+Put its address in `registration.contactsUrl`. We send a signed `GET` request to it, exactly as
+described in [Request verification](RequestVerification.md), and expect:
+
+```json
+{
+    "eventId": 1,
+    "contacts": [
+        { "registrationId": 123, "email": "some@mail.com", "consentAt": "2025-05-05T12:30:00+02:00" },
+        { "registrationId": 124, "email": "cats@mail.com", "consentAt": "2025-05-06T09:15:00+02:00" }
+    ]
+}
+```
+
+| Field                       | Required | Description                                                        |
+|-----------------------------|----------|---------------------------------------------------------------------|
+| **eventId**                 | true     | The event these contacts belong to                                  |
+| **contacts**                | true     | Array, may be empty                                                 |
+| **contacts.registrationId** | true     | The `id` of the matching [team](#registrationteams-description)      |
+| **contacts.email**          | true     | The address to write to                                             |
+| consentAt                   | false    | When the person agreed to receive emails, see [Dates and times](#dates-and-times) |
+
+Note what is *not* in there: no names, no phone numbers, no team composition. You already send the
+names in `registration.teams[]`, and we match the two by `registrationId`. Sending a field twice
+only doubles the number of places it can leak from.
+
+### Rules for this endpoint
+
+Everywhere else in this API verifying our signature is advice. **Here it is a requirement.**
+
+* **Verify `X-Signature-256` and refuse anything that fails.** This is the one endpoint where a
+  missed check hands over personal data rather than a schedule.
+* **Reject stale requests.** Five minutes, as described in
+  [Request verification](RequestVerification.md#the-time-window). Without it, one captured signature
+  is a permanent key to your participant list.
+* **Serve it over HTTPS only**, and answer plain HTTP with a redirect to it rather than the data.
+* **Send `Cache-Control: no-store`**, so that no proxy or CDN on the way keeps a copy.
+* **Never accept or return an address in the query string.** URLs end up in access logs, browser
+  history and `Referer` headers. Keep contacts in the response body.
+* **Return only the people we still need to write to** — skip registrations you have already
+  cancelled, and skip anyone who did not agree to be emailed.
+* **Keep the response out of your logs.** Logging the full body of this one is the easiest way to
+  end up with a plain-text copy of every address you have.
+
+If the signature does not check out, do not return an empty list as if the event had no
+participants — that reads as a data problem and we will retry. Answer instead:
+
+```json
+{"success": false, "message": "Invalid signature"}
+```
+
+with HTTP status code `403`, as described in [Responses and errors](Responses.md).
+
+### Consent, and what we do with the addresses
+
+You are handing us personal data, so a short and honest summary of both sides:
+
+* **Ask for consent at registration.** A `checkbox` field in your
+  [form](FormObject.md#field-object) is enough, as long as it names what the person is agreeing to.
+  If you cannot show that someone agreed, do not put their address in the response.
+* **We use the addresses only to email the participants about that event** — links, reminders,
+  changes. Not for marketing, and not for anything else.
+* **We do not pass them on** to other partners, and we do not add them to any list of ours.
+* **We delete them once they are no longer needed** for the event they were collected for.
+* **Deletion requests reach us through you.** If a participant asks you to erase their data, tell
+  us and we will remove our copy too.
+
 ## Games List
 
 You can create endpoints to list all your games that are available. Please see [GamesAPIv1](GamesAPIv1.md#games-list) for details.
 
 ## Single Game
 
-It is very thoroughly described in [Games API](GamesAPIv1.md#single-game), but if you decide to provide an object instead of
-a URL, we need at least the following fields:
+### Referring to a game
+
+Every event must carry a `game` **object** with at least the fields listed below. If you also want to
+expose the full game data, add a `gameUrl` pointing to your
+[Single Game](GamesAPIv1.md#single-game) endpoint.
+
+```
+game: { id: 1, brand: "Connectit", name: "No3. Hunting" },
+gameUrl: "https://your-site.com/api/games/1"
+```
+
+The reason we ask for the object even when a URL is available: we render lists of dozens of events,
+and each event whose game is only a URL costs us one more HTTP request before we can draw a single
+line of your listing. With the object inlined we can show the event immediately and fetch the full
+game data only when a user opens it.
+
+Keep the inlined object small — `id`, `brand`, `name` and, if you have one, `img`. The long
+description, the gallery and the prices belong behind `gameUrl`.
+
+> **Deprecated:** earlier this field also accepted a plain string URL instead of an object
+> (`game: "https://your-site.com/api/games/1"`). We still accept it, so existing integrations keep
+> working, but please migrate: the string form makes every consumer of your feed branch on the type
+> of the field before it can read a game name.
+
+### Fields of the game object
+
+It is very thoroughly described in [Games API](GamesAPIv1.md#single-game), and here we need at least
+the following:
 
 | Field       | Required | Description                                                                                     |
 |-------------|----------|-------------------------------------------------------------------------------------------------|
@@ -198,17 +437,31 @@ a URL, we need at least the following fields:
 
 We will send the data in accordance with `registration.form.fields` of your event to the URL provided by you in `registration.form.endpoint.url`.
 
+Alongside your own fields, every request carries `datetime`, `source`, `signature` (see
+[Request verification](RequestVerification.md)) and `idempotency_key`, which is what makes a
+repeated registration safe — see
+[Sending the same registration twice](FormObject.md#sending-the-same-registration-twice).
+
 In case of successful processing, you return the following JSON response:
 
 ```json
-{"success": true}
+{"success": true, "registrationId": 123}
 ```
+
+`registrationId` is the id of the registration you just created — the same one you return in
+[`registration.teams[].id`](#registrationteams-description). It is optional and a bare
+`{"success": true}` still works, but without it we cannot match the lead we sent you to the team in
+your event, and we cannot recognise the answer to a repeated request. Please return it.
 
 If you need the user to pay online for this event, you can also provide a "payUrl" with the response:
 
 ```json
-{"success": true, "payUrl": "https://someurl.com/pay/123"}
+{"success": true, "registrationId": 123, "payUrl": "https://someurl.com/pay/123"}
 ```
+
+We send the user to that URL. We do not hear back from the payment provider, so **you tell us the
+payment went through by flipping that registration's `status` to `confirmed`** the next time we read
+the event. If you never change it, the registration stays `new` for us forever.
 
 In case of error:
 
@@ -216,4 +469,9 @@ In case of error:
 {"success":false, "message": "Your phone is incorrect"}
 ```
 
-**Important!** Note that even in case of errors you must always return HTTP 200 status code.
+The `message` is shown to the person who filled in the form, so write it for them.
+
+Answer such a refusal with either `200` or `422` — both are fine, we read the body the same way.
+Keep the other status codes for the situations they describe: `403` if our signature does not check
+out, `5xx` if something broke on your side. The full table, and what we do with each answer, is in
+[Responses and errors](Responses.md).

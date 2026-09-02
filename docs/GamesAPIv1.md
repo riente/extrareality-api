@@ -12,29 +12,18 @@ According to this API, you'll have to develop several endpoints:
 
 ## Request verification
 
-We send the following parameters with each request:
+We sign every request we send you, so that you can make sure it really comes from us and never hand
+your data over to a stranger who guessed the URL.
 
-* datetime (just the timestamp of current request, for example, "2019-05-01 12:00:00")
-* source
-* signature
+Each request carries the `X-Source`, `X-Timestamp` and `X-Signature-256` headers, where the last one
+is an HMAC-SHA256 of the request keyed with a secret that only you and we know. A deprecated MD5
+`X-Signature` header and the legacy `source` / `datetime` / `signature` request parameters are sent
+alongside, so existing integrations keep working.
 
-Signature is formed based on a secret key that only you and we know. By verifying this signature, you can make sure that the request is truly from us, although this check is not required. Anyway, it's always better to perform this check so that you don't occasionally output the information to unauthorized users.
+**Please see [Request verification](RequestVerification.md) for the exact scheme, a ready-to-use PHP
+verification snippet and the pitfalls to avoid.**
 
-The signature is formed in the following manner:
-
-```php
-md5($source . $datetime . $secret)
-```
-
-Used parameters:
-
-* source — usually "extrareality" but there may be other sources as well
-* datetime — in this format "Y-m-d H:i:s" (i.e., yyyy-mm-dd hh:mm:ss)
-* secret — we can generate a random one or decide on it with you beforehand
-
-You should always respond with HTTP status code 200 to any request.
-
-**We strongly advise you to check the request signature before processing the request, so that you are sure that the request comes from us.**
+For what to answer, and which status code to answer it with, see [Responses and errors](Responses.md).
 
 ## Games List
 
@@ -103,7 +92,7 @@ The endpoint must return an array of objects, each one containing the game data.
         "https://your-site.com/img/pic4.jpg"
     ],
     form: {
-        openTime: "2025-05-05 12:00:00",
+        openTime: "2025-05-05T12:00:00+02:00",
         endpoint: {
             url: "https://your-site.com/book/1",
             method: "POST",

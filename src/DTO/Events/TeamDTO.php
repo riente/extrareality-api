@@ -9,7 +9,13 @@ class TeamDTO implements JsonSerializable
 {
     public int $id;
     public string $name;
+
+    /**
+     * @deprecated Addresses now come from the contacts endpoint, see ContactDTO. Still read here so
+     *             that partners who have not migrated keep working.
+     */
     public ?string $email = null;
+
     public int|string $players;
     public RegistrationStatus $status = RegistrationStatus::NEW;
 
@@ -19,17 +25,7 @@ class TeamDTO implements JsonSerializable
         $this->name = $data['name'] ?? '';
         $this->email = $data['email'] ?? null;
         $this->players = $data['players'] ?? 1;
-
-        if ($data['status'] instanceof RegistrationStatus) {
-            $this->status = $data['status'];
-        } elseif (is_string($data['status'])) {
-            $this->status = match ($data['status']) {
-                'confirmed' => RegistrationStatus::CONFIRMED,
-                'reserve' => RegistrationStatus::RESERVE,
-                'cancelled' => RegistrationStatus::CANCELLED,
-                default => RegistrationStatus::NEW,
-            };
-        }
+        $this->status = RegistrationStatus::castToEnum($data['status'] ?? null);
     }
 
     public function jsonSerialize(): array
