@@ -125,7 +125,8 @@ class ExtrarealityEventsClient
         array $data = [],
         ?string $idempotencyKey = null
     ): RegistrationResultDTO {
-        // Travels in the body, so the signature covers it and a repeat is recognisable by its key
+        // Added before the request is built, so the signature covers it either way: it lands in
+        // the body for POST and PUT, and in the query string of a GET endpoint
         $data['idempotency_key'] = $idempotencyKey ?? $this->generateIdempotencyKey();
 
         $request = $this->prepareRequest($endpoint->method, $endpoint->url, $data, $endpoint->format);
