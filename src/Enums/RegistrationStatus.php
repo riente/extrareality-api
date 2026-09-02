@@ -18,8 +18,7 @@ enum RegistrationStatus: string
         return match ($status) {
             'confirmed' => RegistrationStatus::CONFIRMED,
             'reserve' => RegistrationStatus::RESERVE,
-            // "cancel" was the value the docs asked for until we aligned them on "cancelled"
-            'cancelled', 'cancel' => RegistrationStatus::CANCELLED,
+            'cancelled' => RegistrationStatus::CANCELLED,
             default => RegistrationStatus::NEW,
         };
     }

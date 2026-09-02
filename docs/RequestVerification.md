@@ -13,12 +13,9 @@ Every request carries these headers:
 | `X-Source`          | `extrareality`                   | Who is calling. Usually "extrareality", but there may be other sources |
 | `X-Timestamp`       | `2025-05-10T17:00:00+00:00`      | When the request was created, ISO 8601 in UTC  |
 | `X-Signature-256`   | `9f86d081...`                    | HMAC-SHA256 signature, hex encoded             |
-| `X-Signature`       | `5d41402a...`                    | **Deprecated** legacy MD5 signature            |
 
-For backward compatibility the same values are also duplicated as `source`, `datetime` and
-`signature` request parameters (in the query string for GET, in the body for POST), where `datetime`
-uses the legacy `"Y-m-d H:i:s"` format in UTC. New integrations should read the headers and ignore
-these parameters.
+Everything needed to verify a request is in these headers. Nothing is added to your query string or
+to the body of the form data, so the fields you receive are your own.
 
 **We strongly advise you to verify the signature before processing the request**, so that you never
 hand out your data — including the personal data of the people who registered — to a stranger who
@@ -28,7 +25,7 @@ On one endpoint this is not advice but a requirement: the
 [participant contacts](EventsAPIv1.md#participant-contacts) endpoint returns email addresses, so it
 must refuse every request whose signature does not check out.
 
-## Recommended: HMAC-SHA256
+## How the signature is built
 
 `X-Signature-256` is an HMAC-SHA256 of a canonical string, keyed with the secret that only you and
 we know. The canonical string is these five parts joined with a line feed (`\n`):
@@ -55,14 +52,14 @@ $canonical = implode("\n", [
 $signature = hash_hmac('sha256', $canonical, $secret);
 ```
 
-This scheme improves on the legacy one in three ways, and each of them matters:
+Three properties of this scheme are worth knowing, because each of them is something you get only if
+you verify the signature the way it is described here:
 
-* **The body is signed.** With the legacy MD5 the signature does not depend on what we send, so
-  anyone who once saw a valid signature could reuse it to push arbitrary registration data to your
-  lead endpoint. Here, changing a single byte of the body invalidates the signature.
-* **HMAC instead of a plain hash.** `md5($source . $datetime . $secret)` is a naive
-  secret-suffix construction over a weak, collision-broken hash. HMAC is the standard, well-analysed
-  way to key a hash.
+* **The body is signed.** Changing a single byte of what we send invalidates the signature, so
+  nobody can reuse a signature they once saw to push arbitrary registration data to your lead
+  endpoint.
+* **HMAC, not a plain hash.** Concatenating a secret with the data and hashing it is a naive
+  construction with known weaknesses. HMAC is the standard, well-analysed way to key a hash.
 * **The request is bound to its target.** A signature captured on the public events list cannot be
   replayed against your registration endpoint.
 
@@ -115,21 +112,6 @@ signing scheme buys you nothing against replay.
 
 If your clock drifts, this check starts failing on valid requests. Keep NTP running.
 
-## Deprecated: legacy MD5
-
-The old scheme is still sent so that existing integrations do not break:
-
-```php
-md5($source . $datetime . $secret)
-```
-
-where `datetime` is in `"Y-m-d H:i:s"` format (i.e., yyyy-mm-dd hh:mm:ss), in UTC.
-
-It does not authenticate the body and cannot be replay-protected in any meaningful way. Please
-migrate to `X-Signature-256`. Once you have, tell us and we will stop sending the legacy header and
-parameters to your endpoints — until then both are sent side by side, and you may safely ignore the
-one you do not use.
-
 ## About the secret
 
 * We can generate a random secret or agree on it with you beforehand. Ask for at least 32 random
@@ -150,5 +132,4 @@ A rejected signature is not a user-level problem the person filling in a form ca
 not look like one. `403` also keeps it out of your success metrics, which is exactly where you want
 it if someone starts probing your endpoints.
 
-Older integrations answer `200` to everything, that one included, and we still understand it. See
-[Responses and errors](Responses.md) for the full table of status codes and what we do with each.
+See [Responses and errors](Responses.md) for the full table of status codes and what we do with each.

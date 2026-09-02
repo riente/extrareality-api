@@ -16,9 +16,7 @@ We sign every request we send you, so that you can make sure it really comes fro
 your data over to a stranger who guessed the URL.
 
 Each request carries the `X-Source`, `X-Timestamp` and `X-Signature-256` headers, where the last one
-is an HMAC-SHA256 of the request keyed with a secret that only you and we know. A deprecated MD5
-`X-Signature` header and the legacy `source` / `datetime` / `signature` request parameters are sent
-alongside, so existing integrations keep working.
+is an HMAC-SHA256 of the request keyed with a secret that only you and we know.
 
 **Please see [Request verification](RequestVerification.md) for the exact scheme, a ready-to-use PHP
 verification snippet and the pitfalls to avoid.**
@@ -40,23 +38,23 @@ https://your-site.com/api/games?city=2
 
 The endpoint must return an array of objects, each one containing the game data.
 
-```
+```json
 [
     {
-        id: 1,
-        brand: "Detective Games",
-        name: "Your Game",
-        url: "https://your-site.com/api/games/1",
-        img: "https://your-site.com/img/pic1.jpg",
-        description: "Some description"
+        "id": 1,
+        "brand": "Detective Games",
+        "name": "Your Game",
+        "url": "https://your-site.com/api/games/1",
+        "img": "https://your-site.com/img/pic1.jpg",
+        "description": "Some description"
     },
     {
-        id: 2,
-        brand: "Detective Games",
-        name: "Second Game",
-        url: "https://your-site.com/api/games/2",
-        img: "https://your-site.com/img/pic2.jpg",
-        description: "Some description"
+        "id": 2,
+        "brand": "Detective Games",
+        "name": "Second Game",
+        "url": "https://your-site.com/api/games/2",
+        "img": "https://your-site.com/img/pic2.jpg",
+        "description": "Some description"
     }
 ]
 ```
@@ -72,53 +70,54 @@ The endpoint must return an array of objects, each one containing the game data.
 
 ## Single Game
 
-```
+```json
 {
-    id: 57,
-    brand: "Detective Games",
-    name: "No3. The Hunt",
-    type: "offline",
-    locale: "en",
-    img: "https://your-site.com/img/pic1.jpg",
-    description: "Someone commited a crime",
-    prices: [
-        { amount: 10, currency: "EUR", description: "Package #1" },
-        { amount: 20, currency: "EUR", description: "Package #2" }
+    "id": 57,
+    "brand": "Detective Games",
+    "name": "No3. The Hunt",
+    "type": "offline",
+    "locale": "en",
+    "img": "https://your-site.com/img/pic1.jpg",
+    "description": "Someone committed a crime",
+    "prices": [
+        { "amount": 10, "currency": "EUR", "description": "Package #1" },
+        { "amount": 20, "currency": "EUR", "description": "Package #2" }
     ],
-    gallery: [
+    "gallery": [
         "https://your-site.com/img/pic1.jpg",
         "https://your-site.com/img/pic2.jpg",
         "https://your-site.com/img/pic3.jpg",
         "https://your-site.com/img/pic4.jpg"
     ],
-    form: {
-        openTime: "2025-05-05T12:00:00+02:00",
-        endpoint: {
-            url: "https://your-site.com/book/1",
-            method: "POST",
-            format: "json"
+    "form": {
+        "openTime": "2025-05-05T12:00:00+02:00",
+        "endpoint": {
+            "url": "https://your-site.com/book/1",
+            "method": "POST",
+            "format": "json",
+            "idempotent": true
         },
-        fields: [
-            { type: "text", name: "team_name", required: true, title: "Team Name", description: null, max: 20 },
-            { type: "textarea", name: "comment", required: false, title: "Comment", description: null, max: 200 },
-            { type: "number", name: "players_num", required: true, title: "Players", description: null, max: 10 },
-            { type: "phone", name: "phone", required: true, title: "Your phone", description: null },
-            { type: "email", name: "email", required: true, title: "Your email", description: "We'll send links" },
-            { type: "radio", name: "is_first_time", required: true, title: "Are you noob?", variants:  [
-                { value: 0, title: "No" },
-                { value: 1, title: "Yes" },
+        "fields": [
+            { "type": "text", "name": "team_name", "required": true, "title": "Team Name", "description": null, "max": 20 },
+            { "type": "textarea", "name": "comment", "required": false, "title": "Comment", "description": null, "max": 200 },
+            { "type": "number", "name": "players_num", "required": true, "title": "Players", "description": null, "max": 10 },
+            { "type": "phone", "name": "phone", "required": true, "title": "Your phone", "description": null },
+            { "type": "email", "name": "email", "required": true, "title": "Your email", "description": "We'll send links" },
+            { "type": "radio", "name": "is_first_time", "required": true, "title": "Are you noob?", "variants": [
+                { "value": 0, "title": "No" },
+                { "value": 1, "title": "Yes" }
             ] },
-            { type: "select", name: "is_first_time", required: true, title: "Are you noob?", variants:  [
-                { value: "no", title: "No" },
-                { value: "yes", title: "Yes" },
+            { "type": "select", "name": "language", "required": true, "title": "Game language", "variants": [
+                { "value": "en", "title": "English" },
+                { "value": "pl", "title": "Polski" }
             ] },
-            { type: "checkbox", name: "agree", required: true, title: "Do you agree?", value: 1 },
-            { type: "checkboxes", name: "source", required: false, title: "How do you know us?", variants:  [
-                { value: "radio", title: "Radio" },
-                { value: "web", title: "Internet" },
-                { value: "other", title: "Other" },
+            { "type": "checkbox", "name": "agree", "required": true, "title": "Do you agree?", "value": 1 },
+            { "type": "checkboxes", "name": "source", "required": false, "title": "How do you know us?", "variants": [
+                { "value": "radio", "title": "Radio" },
+                { "value": "web", "title": "Internet" },
+                { "value": "other", "title": "Other" }
             ] },
-            { type: "hidden", name: "event_id", value: 123 },
+            { "type": "hidden", "name": "game_id", "value": 57 }
         ]
     }
 }

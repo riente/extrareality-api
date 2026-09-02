@@ -6,9 +6,7 @@ We sign every request we send you, so that you can make sure it really comes fro
 your data over to a stranger who guessed the URL.
 
 Each request carries the `X-Source`, `X-Timestamp` and `X-Signature-256` headers, where the last one
-is an HMAC-SHA256 of the request keyed with a secret that only you and we know. A deprecated MD5
-`X-Signature` header and the legacy `source` / `datetime` / `signature` request parameters are sent
-alongside, so existing integrations keep working.
+is an HMAC-SHA256 of the request keyed with a secret that only you and we know.
 
 **Please see [Request verification](RequestVerification.md) for the exact scheme, a ready-to-use PHP
 verification snippet and the pitfalls to avoid.**
@@ -32,42 +30,18 @@ Please also read [Dates and times](#dates-and-times) and [Event status](#event-s
 This applies to every date and time in this API: the event `time`, `registration.form.openTime`
 and any other timestamp you return to us.
 
-**Recommended format** — [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) with an explicit UTC offset:
+Use [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) with an explicit UTC offset:
 
 ```
 "2025-05-10T19:00:00+02:00"
 ```
 
-**Legacy format** — `"Y-m-d H:i:s"` (i.e., `"2025-05-10 19:00:00"`). Still accepted, so existing
-integrations keep working, but it carries no offset. We interpret such a value as the **local time
-of the place where the event is held**, resolved through the event's `timezone` (see below).
+Always include the offset. We show your events on sites and apps whose users are not necessarily in
+your city, and a bare `"2025-05-10 19:00:00"` gives us no way to tell "19:00 in Warsaw" from "19:00
+in Minsk" — the person reading your listing would see the wrong time in their own calendar.
 
-Why it matters: we show your events on sites and apps whose users are not necessarily in your city.
-Without an offset we cannot tell "19:00 in Warsaw" from "19:00 in Minsk", and the user sees the wrong
-time in their own calendar.
-
-### `timezone`
-
-An optional event property containing an [IANA time zone name](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones),
-for example `"Europe/Warsaw"`.
-
-| You return                        | What we do                                                  |
-|-----------------------------------|-------------------------------------------------------------|
-| ISO 8601 with offset              | Use it as is. `timezone` is not needed, but is still useful  |
-| Legacy format + `timezone`        | Resolve the local time through that zone                     |
-| Legacy format, no `timezone`      | Fall back to the default zone agreed with you for the account |
-
-That last row is a guess on our side, so please avoid it.
-
-**For `type: "online"` events always use ISO 8601 with an offset.** There is no "place where the
-event is held" to fall back to, and the audience is spread across zones by definition.
-
-Two more things worth knowing:
-
-* Do not forget DST. If you build the string by hand, `"+02:00"` in July and `"+01:00"` in December
-  are different offsets of the same zone. Letting your date library format the value avoids this.
-* The `datetime` parameter **we** send with our requests keeps the legacy `"Y-m-d H:i:s"` format
-  (in UTC) for backward compatibility. See [Request verification](#request-verification).
+Do not forget DST: if you build the string by hand, `"+02:00"` in July and `"+01:00"` in December
+are different offsets of the same zone. Letting your date library format the value avoids that.
 
 ## Event status
 
@@ -86,12 +60,11 @@ know nothing about statuses keep behaving exactly as before.
 You can add a `statusComment`: a short human-readable note that we show next to the event, up to 255
 characters, e.g. `"Перенесено на 24 мая"` or `"Sold out, join the waiting list"`.
 
-```
+```json
 {
-    id: 1,
-    status: "cancelled",
-    statusComment: "The host got ill, sorry!",
-    ...
+    "id": 1,
+    "status": "cancelled",
+    "statusComment": "The host got ill, sorry!"
 }
 ```
 
@@ -133,36 +106,39 @@ https://your-site.com/api/events?city=2
 
 Array of objects, each one containing the event data.
 
-```
+```json
 [
     {
-        id: 1,
-        type: online,
-        game: {
-            id: 1,
-            brand: "Connectit",
-            name: "No3. Hunting"
+        "id": 1,
+        "type": "online",
+        "status": "active",
+        "game": {
+            "id": 1,
+            "brand": "Connectit",
+            "name": "No3. Hunting"
         },
-        gameUrl: "https://your-site.com/api/games/1",
-        location: "Your home",
-        time: "2025-05-10T19:00:00+02:00",
-        timezone: "Europe/Warsaw",
-        price: { amount: 10, currency: "EUR", per: "player" },
-        url: "https://your-site.com/api/events/1"
+        "gameUrl": "https://your-site.com/api/games/1",
+        "location": "Your home",
+        "time": "2025-05-10T19:00:00+02:00",
+        "price": { "amount": 10, "currency": "EUR", "per": "player" },
+        "url": "https://your-site.com/api/events/1"
     },
     {
-        id: 2,
-        type: offline,
-        status: "soldout",
-        game: {
-            id: 1,
-            brand: "Connectit",
-            name: "No3. Hunting",
-            img: "https://detectit.org/img/pic1.jpg",
-            description: "Someone commited a crime"
+        "id": 2,
+        "type": "offline",
+        "status": "soldout",
+        "statusComment": "Sold out, join the waiting list",
+        "game": {
+            "id": 1,
+            "brand": "Connectit",
+            "name": "No3. Hunting",
+            "img": "https://detectit.org/img/pic1.jpg",
+            "description": "Someone committed a crime"
         },
-        location: "Cool Cafe"
-        ...
+        "location": "Cool Cafe",
+        "time": "2025-05-17T19:00:00+02:00",
+        "price": { "amount": 60, "currency": "EUR", "per": "team" },
+        "url": "https://your-site.com/api/events/2"
     }
 ]
 ```
@@ -177,66 +153,64 @@ Array of objects, each one containing the event data.
 | gameUrl      | false    | URL to fetch the full [game data](GamesAPIv1.md#single-game)        |
 | **location** | true     | String, where the event takes place                                 |
 | **time**     | true     | When the event is held, see [Dates and times](#dates-and-times)      |
-| timezone     | false    | IANA zone name of the event, see [Dates and times](#dates-and-times) |
 | **price**    | true     | Object, better described in [Single Event](#properties-description) |
 | **url**      | true     | URL to [Single Event](#single-event)                                |
 
 ## Single Event
 
-```
+```json
 {
-    id: 1,
-    type: online,
-    status: "active",
-    statusComment: null,
-    game: {
-        id: 1,
-        brand: "Connectit",
-        name: "No3. Hunting"
+    "id": 1,
+    "type": "online",
+    "status": "active",
+    "statusComment": null,
+    "game": {
+        "id": 1,
+        "brand": "Connectit",
+        "name": "No3. Hunting"
     },
-    gameUrl: "https://your-site.com/api/games/1",
-    location: "Your home",
-    coordinates: { lat: "", long: "" },
-    time: "2025-05-10T19:00:00+02:00",
-    timezone: "Europe/Warsaw",
-    price: { amount: 10, currency: "BYN", per: "player" },
-    registration: {
-        contactsUrl: "https://your-site.com/api/events/1/contacts",
-        teams: [
-             { id: 123, name: "Vasilisy", status: "confirmed", players: "5-6" },
-             { id: 124, name: "Cats", status: "reserve", players: 7 }
+    "gameUrl": "https://your-site.com/api/games/1",
+    "location": "Your home",
+    "coordinates": { "lat": 52.2297, "long": 21.0122 },
+    "time": "2025-05-10T19:00:00+02:00",
+    "price": { "amount": 10, "currency": "BYN", "per": "player" },
+    "registration": {
+        "contactsUrl": "https://your-site.com/api/events/1/contacts",
+        "teams": [
+            { "id": 123, "name": "Vasilisy", "status": "confirmed", "players": 6 },
+            { "id": 124, "name": "Cats", "status": "reserve", "players": 7 }
         ],
-        form: {
-            openTime: "2025-05-05T12:00:00+02:00",
-            endpoint: {
-                url: "https://your-site.com/reg/1",
-                method: "POST",
-                format: "json",
-                idempotent: true
+        "form": {
+            "openTime": "2025-05-05T12:00:00+02:00",
+            "endpoint": {
+                "url": "https://your-site.com/reg/1",
+                "method": "POST",
+                "format": "json",
+                "idempotent": true
             },
-            maxTeams: 20,
-            maxPlayers: 10,
-            fields: [
-                { type: "text", name: "team_name", required: true, title: "Team Name", description: null, max: 20 },
-                { type: "textarea", name: "comment", required: false, title: "Comment", description: null, max: 200 },
-                { type: "number", name: "players_num", required: true, title: "Players", description: null, max: 10 },
-                { type: "phone", name: "phone", required: true, title: "Your phone", description: null },
-                { type: "email", name: "email", required: true, title: "Your email", description: "We'll send links" },
-                { type: "radio", name: "is_first_time", required: true, title: "Are you noob?", variants:  [
-                    { value: 0, title: "No" },
-                    { value: 1, title: "Yes" },
+            "maxTeams": 20,
+            "maxPlayers": 10,
+            "fields": [
+                { "type": "text", "name": "team_name", "required": true, "title": "Team Name", "description": null, "max": 20 },
+                { "type": "textarea", "name": "comment", "required": false, "title": "Comment", "description": null, "max": 200 },
+                { "type": "number", "name": "players_num", "required": true, "title": "Players", "description": null, "max": 10 },
+                { "type": "phone", "name": "phone", "required": true, "title": "Your phone", "description": null },
+                { "type": "email", "name": "email", "required": true, "title": "Your email", "description": "We'll send links" },
+                { "type": "radio", "name": "is_first_time", "required": true, "title": "Are you noob?", "variants": [
+                    { "value": 0, "title": "No" },
+                    { "value": 1, "title": "Yes" }
                 ] },
-                { type: "select", name: "is_first_time", required: true, title: "Are you noob?", variants:  [
-                    { value: "no", title: "No" },
-                    { value: "yes", title: "Yes" },
+                { "type": "select", "name": "language", "required": true, "title": "Game language", "variants": [
+                    { "value": "en", "title": "English" },
+                    { "value": "pl", "title": "Polski" }
                 ] },
-                { type: "checkbox", name: "agree", required: true, title: "Do you agree?", value: 1 },
-                { type: "checkboxes", name: "source", required: false, title: "How do you know us?", variants:  [
-                    { value: "radio", title: "Radio" },
-                    { value: "web", title: "Internet" },
-                    { value: "other", title: "Other" },
+                { "type": "checkbox", "name": "agree", "required": true, "title": "Do you agree?", "value": 1 },
+                { "type": "checkboxes", "name": "source", "required": false, "title": "How do you know us?", "variants": [
+                    { "value": "radio", "title": "Radio" },
+                    { "value": "web", "title": "Internet" },
+                    { "value": "other", "title": "Other" }
                 ] },
-                { type: "hidden", name: "event_id", value: 123 },
+                { "type": "hidden", "name": "event_id", "value": 123 }
             ]
         }
     }
@@ -259,15 +233,13 @@ Array of objects, each one containing the event data.
 | coordinates.lat                   | false    |         | Float value, latitude                                          |
 | coordinates.long                  | false    |         | Float value, longitude                                         |
 | **time**                          | true     |         | See [Dates and times](#dates-and-times)                        |
-| timezone                          | false    | null    | IANA zone name, e.g. "Europe/Warsaw". Required in practice if  |
-|                                   |          |         | `time` has no UTC offset, see [Dates and times](#dates-and-times) |
 | **price**                         | true     |         | Object                                                         |
 | **price.amount**                  | true     |         | Float or integer value                                         |
 | **price.currency**                | true     |         | [ISO 4217](https://en.wikipedia.org/wiki/ISO_4217)             |
 | **price.per**                     | true     |         | Available values: "player", "team"                             |
 | registration                      | false    | null    | Null or object                                                 |
-| registration.maxTeams             | false    |         | Max number of teams                                            |
-| registration.maxPlayersInTeam     | false    |         | Max number of players on the team                              |
+| registration.form.maxTeams        | false    |         | Max number of teams                                            |
+| registration.form.maxPlayers      | false    |         | Max number of people the location can have                     |
 | registration.contactsUrl          | false    | null    | URL we call to fetch the participants' email addresses         |
 |                                   |          |         | See [Participant contacts](#participant-contacts)              |
 | registration.teams                | false    |         | Described below                                                |
@@ -282,20 +254,12 @@ Array of objects, each one containing the event data.
 | **id**      | true     |         | Unique ID of the registration in your system                       |
 | **name**    | true     |         | Player's or team's name                                            |
 | status      | false    | new     | Available values: "new", "confirmed", "reserve", "cancelled"       |
-|             |          |         | Earlier versions of this page said "cancel"; we still accept it,   |
-|             |          |         | but it is deprecated, please send "cancelled"                      |
 | **players** | true     |         | Number of players on the team                                      |
-| ~~email~~   | false    |         | **Deprecated and unsafe here.** See below and                      |
-|             |          |         | [Participant contacts](#participant-contacts)                      |
 
-> **Please stop returning `email` in this object.** This endpoint describes an event, and we may
-> request it without any particular protection. Every address you put here is one guessed URL away
-> from a stranger. If you use our service to email the participants, expose the addresses through
-> [`registration.contactsUrl`](#participant-contacts) instead.
->
-> We still read `email` from here so that existing integrations keep working. If you cannot migrate
-> yet, then at the very least verify the request signature and return `email` only for requests that
-> pass the check — see [Request verification](RequestVerification.md).
+There is deliberately no email address in this object. This endpoint describes an event, we may
+request it often, and its URL is easy to guess — an address here would be one guessed URL away from
+a stranger. Addresses travel through
+[`registration.contactsUrl`](#participant-contacts) instead.
 
 ### `registration.form.fields` description
 
@@ -402,9 +366,11 @@ Every event must carry a `game` **object** with at least the fields listed below
 expose the full game data, add a `gameUrl` pointing to your
 [Single Game](GamesAPIv1.md#single-game) endpoint.
 
-```
-game: { id: 1, brand: "Connectit", name: "No3. Hunting" },
-gameUrl: "https://your-site.com/api/games/1"
+```json
+{
+    "game": { "id": 1, "brand": "Connectit", "name": "No3. Hunting" },
+    "gameUrl": "https://your-site.com/api/games/1"
+}
 ```
 
 The reason we ask for the object even when a URL is available: we render lists of dozens of events,
@@ -414,11 +380,6 @@ game data only when a user opens it.
 
 Keep the inlined object small — `id`, `brand`, `name` and, if you have one, `img`. The long
 description, the gallery and the prices belong behind `gameUrl`.
-
-> **Deprecated:** earlier this field also accepted a plain string URL instead of an object
-> (`game: "https://your-site.com/api/games/1"`). We still accept it, so existing integrations keep
-> working, but please migrate: the string form makes every consumer of your feed branch on the type
-> of the field before it can read a game name.
 
 ### Fields of the game object
 
@@ -437,10 +398,10 @@ the following:
 
 We will send the data in accordance with `registration.form.fields` of your event to the URL provided by you in `registration.form.endpoint.url`.
 
-Alongside your own fields, every request carries `datetime`, `source`, `signature` (see
-[Request verification](RequestVerification.md)) and `idempotency_key`, which is what makes a
-repeated registration safe — see
-[Sending the same registration twice](FormObject.md#sending-the-same-registration-twice).
+The only field we add to your own is `idempotency_key`, which is what makes a repeated registration
+safe — see [Sending the same registration twice](FormObject.md#sending-the-same-registration-twice).
+Everything needed to verify that the request is ours travels in headers, see
+[Request verification](RequestVerification.md).
 
 In case of successful processing, you return the following JSON response:
 
@@ -449,9 +410,8 @@ In case of successful processing, you return the following JSON response:
 ```
 
 `registrationId` is the id of the registration you just created — the same one you return in
-[`registration.teams[].id`](#registrationteams-description). It is optional and a bare
-`{"success": true}` still works, but without it we cannot match the lead we sent you to the team in
-your event, and we cannot recognise the answer to a repeated request. Please return it.
+[`registration.teams[].id`](#registrationteams-description). Without it we cannot match the lead we
+sent you to the team in your event, and we cannot recognise the answer to a repeated request.
 
 If you need the user to pay online for this event, you can also provide a "payUrl" with the response:
 
@@ -471,7 +431,6 @@ In case of error:
 
 The `message` is shown to the person who filled in the form, so write it for them.
 
-Answer such a refusal with either `200` or `422` — both are fine, we read the body the same way.
-Keep the other status codes for the situations they describe: `403` if our signature does not check
-out, `5xx` if something broke on your side. The full table, and what we do with each answer, is in
-[Responses and errors](Responses.md).
+Answer such a refusal with `422`. Keep the other status codes for the situations they describe:
+`403` if our signature does not check out, `5xx` if something broke on your side. The full table, and
+what we do with each answer, is in [Responses and errors](Responses.md).

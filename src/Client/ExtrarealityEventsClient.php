@@ -11,7 +11,6 @@ use Extrareality\Enums\EndpointFormat;
 use Extrareality\Enums\HttpMethod;
 use DateTimeImmutable;
 use DateTimeZone;
-use Exception;
 use Extrareality\Exceptions\ExtrarealityException;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
@@ -97,8 +96,8 @@ class ExtrarealityEventsClient
         $request = $this->prepareRequest(HttpMethod::GET, $contactsUrl);
         $data = $this->sendRequest($request, acceptBusinessErrors: true);
 
-        // A refused request comes back as {"success": false}, with 403 or, from partners still on
-        // the old contract, with 200. Either way it must not be mistaken for "nobody registered"
+        // A refusal comes back as 403 with {"success": false}, which parseResponse() hands over
+        // rather than throwing, so it must not be mistaken here for "nobody registered"
         if (isset($data['success']) && !$data['success']) {
             throw new ExtrarealityException(
                 'Contacts request refused: ' . ($data['message'] ?? 'no reason given')
@@ -245,14 +244,7 @@ class ExtrarealityEventsClient
     }
 
     /**
-     * @deprecated Superseded by getSignature(). Sent alongside it until the receiving side migrates.
-     */
-    private function getLegacySignature(string $datetime): string
-    {
-        return md5($this->source . $datetime . $this->secret);
-    }
 
-    /**
      * HMAC-SHA256 over the canonical request string, as described in docs/RequestVerification.md
      */
     private function getSignature(string $timestamp, HttpMethod $method, string $url, ?string $body): string
@@ -283,24 +275,12 @@ class ExtrarealityEventsClient
         return $target;
     }
 
-    /**
-     * @throws ExtrarealityException
-     */
     private function prepareRequest(HttpMethod $method,
                                     string $url,
                                     array $data = [],
                                     EndpointFormat $format = EndpointFormat::FORM
     ): Request {
-        try {
-            $timestamp = new DateTimeImmutable($data['datetime'] ?? 'now', new DateTimeZone('UTC'));
-        } catch (Exception $e) {
-            throw new ExtrarealityException('Invalid datetime provided: ' . $e->getMessage(), 0, $e);
-        }
-
-        // The legacy scheme signs this one, so both signatures have to describe the same moment
-        $data['datetime'] = $timestamp->format('Y-m-d H:i:s');
-        $data['signature'] = $this->getLegacySignature($data['datetime']);
-        $data['source'] = $this->source;
+        $timestamp = new DateTimeImmutable('now', new DateTimeZone('UTC'));
 
         if ($method === HttpMethod::GET) {
             $url .= (str_contains($url, '?') ? '&' : '?') . http_build_query($data);
@@ -319,7 +299,6 @@ class ExtrarealityEventsClient
             'X-Source' => $this->source,
             'X-Timestamp' => $isoTimestamp,
             'X-Signature-256' => $this->getSignature($isoTimestamp, $method, $url, $body),
-            'X-Signature' => $data['signature'],
         ];
 
         return new Request($method->value, $url, $headers, $body);

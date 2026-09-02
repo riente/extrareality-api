@@ -15,43 +15,32 @@ For example, in [Events API](EventsAPIv1.md#single-event) or in [Games API](Game
 
 You can find more details [here](EventsAPIv1.md#single-event)
 
-```
+```json
 {
-    id: 1,
-    time: "2025-05-10T19:00:00+02:00",
-    ...
-    
-    registration: {
-        form: {
-            openTime: "2025-05-05T12:00:00+02:00",
-            endpoint: {
-                url: "https://your-site.com/reg/1",
-                method: "POST",
-                format: "json"
+    "id": 1,
+    "type": "online",
+    "status": "active",
+    "game": { "id": 1, "brand": "Connectit", "name": "No3. Hunting" },
+    "location": "Your home",
+    "time": "2025-05-10T19:00:00+02:00",
+    "price": { "amount": 10, "currency": "EUR", "per": "player" },
+    "registration": {
+        "form": {
+            "openTime": "2025-05-05T12:00:00+02:00",
+            "endpoint": {
+                "url": "https://your-site.com/reg/1",
+                "method": "POST",
+                "format": "json",
+                "idempotent": true
             },
-            maxTeams: 20,
-            maxPlayers: 10,
-            fields: [
-                { type: "text", name: "team_name", required: true, title: "Team Name", description: null, max: 20 },
-                { type: "textarea", name: "comment", required: false, title: "Comment", description: null, max: 200 },
-                { type: "number", name: "players_num", required: true, title: "Players", description: null, max: 10 },
-                { type: "phone", name: "phone", required: true, title: "Your phone", description: null },
-                { type: "email", name: "email", required: true, title: "Your email", description: "We'll send links" },
-                { type: "radio", name: "is_first_time", required: true, title: "Are you noob?", variants:  [
-                    { value: 0, title: "No" },
-                    { value: 1, title: "Yes" },
-                ] },
-                { type: "select", name: "is_first_time", required: true, title: "Are you noob?", variants:  [
-                    { value: "no", title: "No" },
-                    { value: "yes", title: "Yes" },
-                ] },
-                { type: "checkbox", name: "agree", required: true, title: "Do you agree?", value: 1 },
-                { type: "checkboxes", name: "source", required: false, title: "How do you know us?", variants:  [
-                    { value: "radio", title: "Radio" },
-                    { value: "web", title: "Internet" },
-                    { value: "other", title: "Other" },
-                ] },
-                { type: "hidden", name: "event_id", value: 123 },
+            "maxTeams": 20,
+            "maxPlayers": 10,
+            "fields": [
+                { "type": "text", "name": "team_name", "required": true, "title": "Team Name", "description": null, "max": 20 },
+                { "type": "phone", "name": "phone", "required": true, "title": "Your phone", "description": null },
+                { "type": "email", "name": "email", "required": true, "title": "Your email", "description": "We'll send links" },
+                { "type": "checkbox", "name": "agree", "required": true, "title": "Do you agree?", "value": 1 },
+                { "type": "hidden", "name": "event_id", "value": 123 }
             ]
         }
     }
@@ -62,23 +51,22 @@ You can find more details [here](EventsAPIv1.md#single-event)
 
 You can find more details [here](GamesAPIv1.md#single-game)
 
-```
+```json
 {
-    id: 57,
-    name: "No3. The Hunt",
-    ...
-    
-    form: {
-        openTime: "2020-01-01T00:00:00+03:00",
-        endpoint: {
-            url: "https://your-site.com/api/registration",
-            method: "POST",
-            format: "form",
+    "id": 57,
+    "brand": "Detective Games",
+    "name": "No3. The Hunt",
+    "type": "offline",
+    "form": {
+        "openTime": "2020-01-01T00:00:00+03:00",
+        "endpoint": {
+            "url": "https://your-site.com/api/registration",
+            "method": "POST",
+            "format": "form"
         },
-        fields: [
-            { type: "text", name: "name", required: true, title: "Your name" },
-            
-            ...
+        "fields": [
+            { "type": "text", "name": "name", "required": true, "title": "Your name" },
+            { "type": "phone", "name": "phone", "required": true, "title": "Your phone" }
         ]
     }
 }
@@ -137,9 +125,9 @@ It is an array of objects, each describing a single form field that we'll use to
 
 We will send the data in accordance with `form.fields` of your object to the URL provided by you in `form.endpoint.url`.
 
-Alongside your own fields, every request carries `datetime`, `source`, `signature` (see
-[Request verification](RequestVerification.md)) and `idempotency_key`, described
-[below](#sending-the-same-registration-twice).
+The only field we add to your own is `idempotency_key`, described
+[below](#sending-the-same-registration-twice). Everything needed to verify that the request is ours
+travels in headers, see [Request verification](RequestVerification.md).
 
 In case of successful processing, you return the following JSON response:
 
@@ -148,11 +136,10 @@ In case of successful processing, you return the following JSON response:
 ```
 
 `registrationId` is the id of the registration you have just created, the same one you return in
-`registration.teams[].id` of the [event](EventsAPIv1.md#single-event). It is optional, and a bare
-`{"success": true}` still works, but without it neither side can talk about a particular
-registration afterwards: we cannot match the lead we sent you to the team in your event, we cannot
-tell you which registration a person is asking about, and we cannot recognise the answer to a
-repeated request. Please return it.
+`registration.teams[].id` of the [event](EventsAPIv1.md#single-event). Without it neither side can
+talk about a particular registration afterwards: we cannot match the lead we sent you to the team in
+your event, we cannot tell you which registration a person is asking about, and we cannot recognise
+the answer to a repeated request.
 
 If you need the user to pay online for something, you can also provide a "payUrl" with the response:
 
@@ -173,10 +160,9 @@ In case of error:
 
 The `message` is shown to the person who filled in the form, so write it for them.
 
-Answer such a refusal with either `200` or `422` — both are fine, we read the body the same way.
-Keep the other status codes for the situations they describe: `403` if our signature does not check
-out, `5xx` if something broke on your side. The full table, and what we do with each answer, is in
-[Responses and errors](Responses.md).
+Answer such a refusal with `422`. Keep the other status codes for the situations they describe:
+`403` if our signature does not check out, `5xx` if something broke on your side. The full table, and
+what we do with each answer, is in [Responses and errors](Responses.md).
 
 ## Sending the same registration twice
 
@@ -218,12 +204,14 @@ Three rules make this work:
 
 ### Tell us you handle it
 
-```
-endpoint: {
-    url: "https://your-site.com/reg/1",
-    method: "POST",
-    format: "json",
-    idempotent: true
+```json
+{
+    "endpoint": {
+        "url": "https://your-site.com/reg/1",
+        "method": "POST",
+        "format": "json",
+        "idempotent": true
+    }
 }
 ```
 
