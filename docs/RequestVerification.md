@@ -10,7 +10,7 @@ Every request carries these headers:
 
 | Header              | Example                          | Description                                    |
 |---------------------|----------------------------------|------------------------------------------------|
-| `X-Source`          | `extrareality`                   | Who is calling. Usually "extrareality", but there may be other sources |
+| `X-Source`          | `extrareality`                   | Which of our sites is calling. All of them share the secret you agreed with us |
 | `X-Timestamp`       | `2025-05-10T17:00:00+00:00`      | When the request was created, ISO 8601 in UTC  |
 | `X-Signature-256`   | `9f86d081...`                    | HMAC-SHA256 signature, hex encoded             |
 

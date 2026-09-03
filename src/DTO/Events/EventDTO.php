@@ -41,6 +41,12 @@ class EventDTO extends AbstractApiDTO
      */
     public string $time = '';
 
+    /** When the event ends, same format as $time */
+    public ?string $endTime = null;
+
+    /** BCP 47 tag of the event and of the texts in this object, e.g. "pl" */
+    public ?string $locale = null;
+
     public EventPriceDTO $price;
     public ?RegistrationDTO $registration = null;
 
@@ -59,6 +65,8 @@ class EventDTO extends AbstractApiDTO
         $this->location = (string) ($data['location'] ?? '');
         $this->coordinates = CoordinatesDTO::tryFromArray($data['coordinates'] ?? null);
         $this->time = (string) ($data['time'] ?? '');
+        $this->endTime = $data['endTime'] ?? null;
+        $this->locale = $data['locale'] ?? null;
         $this->price = new EventPriceDTO(is_array($data['price'] ?? null) ? $data['price'] : []);
         $this->url = $data['url'] ?? null;
 
@@ -96,6 +104,8 @@ class EventDTO extends AbstractApiDTO
             'statusComment' => $this->statusComment,
             'gameUrl' => $this->gameUrl,
             'coordinates' => $this->coordinates,
+            'endTime' => $this->endTime,
+            'locale' => $this->locale,
             'registration' => $this->registration,
             'url' => $this->url,
         ];

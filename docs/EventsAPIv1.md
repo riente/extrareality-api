@@ -1,5 +1,10 @@
 # ExtraReality Game Events API v1
 
+This page is the contract between a **partner**, who publishes events, and **us** — one company
+running several event listings. You integrate with one of our sites, and that is where you manage
+your events; every other site of ours reads them from there and sends you the registrations it
+collects. How that works from your side is described in [One partner, many sites](#one-partner-many-sites).
+
 ## Request verification
 
 We sign every request we send you, so that you can make sure it really comes from us and never hand
@@ -23,7 +28,8 @@ You'll have to develop several endpoints:
 * [Registration](#sign-up-for-an-event)
 * [Participant contacts](#participant-contacts) — only if you want us to email your participants
 
-Please also read [Dates and times](#dates-and-times) and [Event status](#event-status) before you start.
+Please also read [Dates and times](#dates-and-times), [Event status](#event-status) and
+[Identity and stability](#identity-and-stability) before you start.
 
 ## Dates and times
 
@@ -91,6 +97,20 @@ Because `cancelled` and `soldout` live in a single field, one rule settles the o
 event is `cancelled` even if it was sold out first.** The event not happening is what the user needs
 to know.
 
+## Identity and stability
+
+Every object here has an `id` — the event, the game, the registration. Three rules about them:
+
+* **An `id` is unique within your system and stable for the object's lifetime.** Do not renumber, do
+  not reuse an id after deleting its object, do not generate ids per request. We key everything on
+  them: a changed id is a new event to us, and the old one looks like it vanished.
+* **Across systems, ids collide.** Your event `1` and another partner's event `1` are different
+  events, so we key by *feed plus id*, never by `id` alone. You need not make ids globally unique,
+  only unique inside your system — including across your city feeds.
+* **`url` is the global identity of an event.** It is an absolute URL to your single event endpoint,
+  no two events anywhere share one, and it is as stable as `id`. When we need to tell events from
+  different partners apart, this is what we compare.
+
 ## Events List
 
 It is presumed that all the events on the list are held in one city (or online).
@@ -104,7 +124,9 @@ https://your-site.com/api/events?city=1
 https://your-site.com/api/events?city=2
 ```
 
-Array of objects, each one containing the event data.
+Array of objects, each one containing the event data. List the events that have not started yet,
+including the cancelled ones until their `time` passes, and drop everything older. An empty list is
+`[]`. We expect one city's upcoming events to fit in a single response, so there is no pagination.
 
 ```json
 [
@@ -118,8 +140,10 @@ Array of objects, each one containing the event data.
             "name": "No3. Hunting"
         },
         "gameUrl": "https://your-site.com/api/games/1",
-        "location": "Your home",
+        "location": "Online, Zoom",
         "time": "2025-05-10T19:00:00+02:00",
+        "endTime": "2025-05-10T21:00:00+02:00",
+        "locale": "en",
         "price": { "amount": 10, "currency": "EUR", "per": "player" },
         "url": "https://your-site.com/api/events/1"
     },
@@ -152,9 +176,11 @@ Array of objects, each one containing the event data.
 | **game**     | true     | [Object with game data](#single-game), see [Referring to a game](#referring-to-a-game) |
 | gameUrl      | false    | URL to fetch the full [game data](GamesAPIv1.md#single-game)        |
 | **location** | true     | String, where the event takes place                                 |
-| **time**     | true     | When the event is held, see [Dates and times](#dates-and-times)      |
+| **time**     | true     | When the event starts, see [Dates and times](#dates-and-times)       |
+| endTime      | false    | When it ends, same format                                            |
+| locale       | false    | Language of the event and of the texts in this object, e.g. "pl"    |
 | **price**    | true     | Object, better described in [Single Event](#properties-description) |
-| **url**      | true     | URL to [Single Event](#single-event)                                |
+| **url**      | true     | Absolute URL to [Single Event](#single-event), see [Identity](#identity-and-stability) |
 
 ## Single Event
 
@@ -170,10 +196,13 @@ Array of objects, each one containing the event data.
         "name": "No3. Hunting"
     },
     "gameUrl": "https://your-site.com/api/games/1",
-    "location": "Your home",
-    "coordinates": { "lat": 52.2297, "long": 21.0122 },
+    "location": "Online, Zoom",
+    "coordinates": null,
     "time": "2025-05-10T19:00:00+02:00",
-    "price": { "amount": 10, "currency": "BYN", "per": "player" },
+    "endTime": "2025-05-10T21:00:00+02:00",
+    "locale": "en",
+    "price": { "amount": 10, "currency": "EUR", "per": "player" },
+    "url": "https://your-site.com/api/events/1",
     "registration": {
         "contactsUrl": "https://your-site.com/api/events/1/contacts",
         "teams": [
@@ -210,7 +239,7 @@ Array of objects, each one containing the event data.
                     { "value": "web", "title": "Internet" },
                     { "value": "other", "title": "Other" }
                 ] },
-                { "type": "hidden", "name": "event_id", "value": 123 }
+                { "type": "hidden", "name": "event_id", "value": 1 }
             ]
         }
     }
@@ -228,12 +257,16 @@ Array of objects, each one containing the event data.
 | statusComment                     | false    | null    | Short note shown next to the event, up to 255 characters       |
 | **game**                          | true     |         | [Object with game data](#single-game), see below               |
 | gameUrl                           | false    | null    | URL to fetch the full [game data](GamesAPIv1.md#single-game)   |
-| **location**                      | true     |         | String, where the event takes place                            |
+| **location**                      | true     |         | String, where the event takes place. For an online event name  |
+|                                   |          |         | the platform, e.g. "Online, Zoom"                              |
 | coordinates                       | false    | null    | Null or object with required "lat" and "long" properties       |
 | coordinates.lat                   | false    |         | Float value, latitude                                          |
 | coordinates.long                  | false    |         | Float value, longitude                                         |
-| **time**                          | true     |         | See [Dates and times](#dates-and-times)                        |
-| **price**                         | true     |         | Object                                                         |
+| **time**                          | true     |         | When the event starts, see [Dates and times](#dates-and-times) |
+| endTime                           | false    | null    | When it ends, same format                                      |
+| locale                            | false    | null    | [BCP 47](https://en.wikipedia.org/wiki/IETF_language_tag) tag of the event and of the texts in this object, e.g. "pl", "ru" |
+| **url**                           | true     |         | Absolute URL of this endpoint, see [Identity](#identity-and-stability) |
+| **price**                         | true     |         | Object. A free event is `amount: 0`                            |
 | **price.amount**                  | true     |         | Float or integer value                                         |
 | **price.currency**                | true     |         | [ISO 4217](https://en.wikipedia.org/wiki/ISO_4217)             |
 | **price.per**                     | true     |         | Available values: "player", "team"                             |
@@ -252,7 +285,8 @@ Array of objects, each one containing the event data.
 | Field       | Required | Default | Description                                                        |
 |-------------|----------|---------|--------------------------------------------------------------------|
 | **id**      | true     |         | Unique ID of the registration in your system                       |
-| **name**    | true     |         | Player's or team's name                                            |
+| **name**    | true     |         | Team name. It is shown publicly, so for a solo player use a        |
+|             |          |         | nickname, not the person's real name                               |
 | status      | false    | new     | Available values: "new", "confirmed", "reserve", "cancelled"       |
 | **players** | true     |         | Number of players on the team                                      |
 
@@ -349,10 +383,32 @@ You are handing us personal data, so a short and honest summary of both sides:
   If you cannot show that someone agreed, do not put their address in the response.
 * **We use the addresses only to email the participants about that event** — links, reminders,
   changes. Not for marketing, and not for anything else.
-* **We do not pass them on** to other partners, and we do not add them to any list of ours.
+* **We do not pass them on** — not to other partners, not to anyone outside the company, and not
+  into any list of ours. Our own sites are one legal entity, see
+  [One partner, many sites](#one-partner-many-sites).
 * **We delete them once they are no longer needed** for the event they were collected for.
 * **Deletion requests reach us through you.** If a participant asks you to erase their data, tell
   us and we will remove our copy too.
+
+## One partner, many sites
+
+Our event listings are several sites of one company. You integrate once, and your events show up on
+all of them: one site reads your feed, the others read it from that site in exactly this format, and
+each of them may send you registrations. What that means for you:
+
+* **Requests may come from any of our sites.** They all sign with the secret you agreed with us,
+  and each names itself in `X-Source` — so accept every `X-Source` value we have told you about,
+  and verify all of them the same way.
+* **What you publish is what every site sees.** Ids, `url`, `gameUrl`, `contactsUrl`, `status` and
+  `statusComment` pass through untouched, so you never have to reason about which site is looking.
+  Your `game.brand` is how we know whose event it is everywhere.
+* **A registration reaches you once, from the site that collected it**, with an `idempotency_key`
+  generated there and never changed on the way. Whichever site it came from, the answer is the same
+  `registrationId` you would give anyone else.
+* **Contacts stay inside the company.** Every site that emails your participants fetches them from
+  your `contactsUrl` directly, and the promises in
+  [Participant contacts](#consent-and-what-we-do-with-the-addresses) hold for all of our sites
+  together, since they are one legal entity.
 
 ## Games List
 
@@ -389,7 +445,7 @@ the following:
 | Field       | Required | Description                                                                                     |
 |-------------|----------|-------------------------------------------------------------------------------------------------|
 | **id**      | true     | Unique game ID from your system                                                                 |
-| **brand**   | true     | If you have several categories of games you can indicate one here, or it can always be the same |
+| **brand**   | true     | Your brand, the name we show as the owner of the event. If you run several game lines, name the line |
 | **name**    | true     | Game name                                                                                       |
 | img         | false    | If you have unique game posters/pics                                                            |
 | description | false    | Up to 2048 characters                                                                           |

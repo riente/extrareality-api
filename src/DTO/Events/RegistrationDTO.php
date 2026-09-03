@@ -20,9 +20,6 @@ class RegistrationDTO implements JsonSerializable
      */
     public ?string $contactsUrl = null;
 
-    public ?int $maxTeams = null;
-    public ?int $maxPlayersInTeam = null;
-
     /** @var array<TeamDTO> */
     public array $teams = [];
 
@@ -33,24 +30,12 @@ class RegistrationDTO implements JsonSerializable
         $this->contactsUrl = $data['contactsUrl'] ?? null;
         $this->form = isset($data['form']) && is_array($data['form']) ? new FormDTO($data['form']) : null;
         $this->teams = self::readTeams($data['teams'] ?? []);
-
-        // EventsAPIv1 documents these limits on the registration object, FormObject documents them
-        // on the form as maxTeams/maxPlayers. Partners follow one page or the other, so read the
-        // registration first and fall back to the form rather than making the caller check both
-        $this->maxTeams = isset($data['maxTeams'])
-            ? (int) $data['maxTeams']
-            : $this->form?->maxTeams;
-        $this->maxPlayersInTeam = isset($data['maxPlayersInTeam'])
-            ? (int) $data['maxPlayersInTeam']
-            : $this->form?->maxPlayers;
     }
 
     public function jsonSerialize(): array
     {
         return [
             'contactsUrl' => $this->contactsUrl,
-            'maxTeams' => $this->maxTeams,
-            'maxPlayersInTeam' => $this->maxPlayersInTeam,
             'teams' => $this->teams,
             'form' => $this->form,
         ];

@@ -21,7 +21,7 @@ You can find more details [here](EventsAPIv1.md#single-event)
     "type": "online",
     "status": "active",
     "game": { "id": 1, "brand": "Connectit", "name": "No3. Hunting" },
-    "location": "Your home",
+    "location": "Online, Zoom",
     "time": "2025-05-10T19:00:00+02:00",
     "price": { "amount": 10, "currency": "EUR", "per": "player" },
     "registration": {
@@ -40,7 +40,7 @@ You can find more details [here](EventsAPIv1.md#single-event)
                 { "type": "phone", "name": "phone", "required": true, "title": "Your phone", "description": null },
                 { "type": "email", "name": "email", "required": true, "title": "Your email", "description": "We'll send links" },
                 { "type": "checkbox", "name": "agree", "required": true, "title": "Do you agree?", "value": 1 },
-                { "type": "hidden", "name": "event_id", "value": 123 }
+                { "type": "hidden", "name": "event_id", "value": 1 }
             ]
         }
     }
@@ -80,7 +80,7 @@ You can find more details [here](GamesAPIv1.md#single-game)
 | form.openTime         | false    | now     | When the form becomes available. Formats are described   |
 |                       |          |         | in [Dates and times](EventsAPIv1.md#dates-and-times)     |
 | form.maxTeams         | false    |         | Maximum number of teams allowed to register              |
-| form.maxPlayers       | false    |         | Maxumum number of people the location can have           |
+| form.maxPlayers       | false    |         | Maximum number of people the location can have           |
 | **form.endpoint**     | true     |         | Object describing the URL and format of our requests     |
 | **form.endpoint.url** | true     |         | URL of your site to which we'll send the requests        |
 | form.endpoint.method  | false    | POST    | HTTP method                                              |
@@ -101,7 +101,7 @@ It is an array of objects, each describing a single form field that we'll use to
 | name        | true     | Field's "name" attribute, the var name that we'll send to you                                      |
 | value       | false    | Predefined value for checkboxes or hidden fields                                                   |
 | required    | true     | Boolean, whether the field is required                                                             |
-| title       | true     | The field's title, which the user can see on the UI                                                |
+| title       | true     | The field's title, which the user can see on the UI. Not needed for "hidden"                       |
 | description | false    | May be provided if you wish to describe the field better                                           |
 | max         | false    | Available for "text" (max characters) and "number" (max numeric value)                             |
 | variants    | false    | Available for "radio", "select", "checkboxes"                                                      |
