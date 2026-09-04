@@ -51,51 +51,54 @@ are different offsets of the same zone. Letting your date library format the val
 
 ## Event status
 
-Plans change: an event gets cancelled, or every seat is taken a week before it starts. The optional
-`status` property tells us which of these happened.
+An event that is on and taking registrations needs no `status` at all — that is the default. The
+property exists for the two cases where the event still happens but the registration works
+differently.
 
-| Value       | Meaning                                                                  |
-|-------------|--------------------------------------------------------------------------|
-| `active`    | The default. The event takes place and accepts registrations as usual    |
-| `soldout`   | The event takes place, but there are no seats left                       |
-| `cancelled` | The event will not take place                                            |
+| Value     | Meaning                                                                          |
+|-----------|-----------------------------------------------------------------------------------|
+| `active`  | The default. The event takes place and accepts registrations as usual             |
+| `reserve` | The main list is full. Registration stays open, new teams join the waiting list   |
+| `soldout` | No more registrations at all. Rare — prefer `reserve`                             |
 
-If you omit the property entirely, we treat the event as `active` — so existing integrations that
-know nothing about statuses keep behaving exactly as before.
+If you omit the property, we treat the event as `active`.
 
 You can add a `statusComment`: a short human-readable note that we show next to the event, up to 255
-characters, e.g. `"Перенесено на 24 мая"` or `"Sold out, join the waiting list"`.
+characters, e.g. `"No places, registration to reserve"` or `"Sold out, see you next week"`.
 
 ```json
 {
     "id": 1,
-    "status": "cancelled",
-    "statusComment": "The host got ill, sorry!"
+    "status": "reserve",
+    "statusComment": "The main list is full, but we do take a waiting list"
 }
 ```
-
-### Please do not just remove the event
-
-The tempting alternative is to drop a cancelled event from the list. Please do not, at least until
-its `time` has passed.
-
-An event that vanishes from your feed is indistinguishable from a bad deploy, an expired certificate
-or a timeout on your side — we cannot tell "this event is cancelled" from "this endpoint is broken
-right now". A vanished event also leaves the people who already registered with no explanation
-anywhere, while `cancelled` plus a `statusComment` reaches every place your event was shown.
 
 ### What we do with each status
 
 * `active` — the event is listed and the registration form, if any, is shown.
-* `soldout` — the event stays visible, but we hide the registration form and stop sending you leads
-  for it. Use it instead of removing the `registration` object, so the event does not look as if it
-  never accepted registrations at all.
-* `cancelled` — the event is shown as cancelled and we send you no leads for it. We keep displaying
-  it until `time` passes, then drop it.
+* `reserve` — the event is listed and the form stays open, but we tell the person they are joining
+  the waiting list rather than the main one. This is what
+  [`placesLeft: 0`](#how-many-places-are-left) should come with. Take those registrations as usual; when a place frees
+  up and you move a team up, show it by changing that team's `status` in
+  [`registration.teams[]`](#registrationteams-description) from `reserve` to `confirmed`.
+* `soldout` — the event stays visible, but we hide the form and send you no leads for it. Use it
+  only when you genuinely cannot take anyone else, not merely when the main list is full — a closed
+  form turns away people who would have waited.
 
-Because `cancelled` and `soldout` live in a single field, one rule settles the overlap: **a cancelled
-event is `cancelled` even if it was sold out first.** The event not happening is what the user needs
-to know.
+Note that `reserve` appears twice in this API and means the same thing on both levels: the event is
+in `reserve` mode, and a team that signed up while it was gets `status: "reserve"` of its own.
+
+### Cancelling an event
+
+There is no `cancelled` status. An event you no longer run simply disappears from the list, and we
+drop it from the listing when we next read the feed.
+
+One thing to be careful about, because it is the failure mode this costs us: an empty or broken feed
+must never look like "everything is cancelled". If you have no upcoming events, answer `200` with
+`[]`; if something is broken on your side, answer `5xx` rather than an empty list, see
+[Responses and errors](Responses.md). We treat a missing event as cancelled only when the rest of
+the feed came back normally.
 
 ## Identity and stability
 
@@ -124,9 +127,9 @@ https://your-site.com/api/events?city=1
 https://your-site.com/api/events?city=2
 ```
 
-Array of objects, each one containing the event data. List the events that have not started yet,
-including the cancelled ones until their `time` passes, and drop everything older. An empty list is
-`[]`. We expect one city's upcoming events to fit in a single response, so there is no pagination.
+Array of objects, each one containing the event data. List the events that have not started yet and
+drop everything older. An empty list is `[]`. We expect one city's upcoming events to fit in a
+single response, so there is no pagination.
 
 ```json
 [
@@ -150,8 +153,8 @@ including the cancelled ones until their `time` passes, and drop everything olde
     {
         "id": 2,
         "type": "offline",
-        "status": "soldout",
-        "statusComment": "Sold out, join the waiting list",
+        "status": "reserve",
+        "statusComment": "The main list is full, but we do take a waiting list",
         "game": {
             "id": 1,
             "brand": "Connectit",
@@ -171,7 +174,7 @@ including the cancelled ones until their `time` passes, and drop everything olde
 |--------------|----------|---------------------------------------------------------------------|
 | **id**       | true     | Unique event ID from your system                                    |
 | **type**     | true     | Available values: "online", "offline"                               |
-| status       | false    | "active" (default), "soldout" or "cancelled", see [Event status](#event-status) |
+| status       | false    | "active" (default), "reserve" or "soldout", see [Event status](#event-status) |
 | statusComment| false    | Short note shown next to the event, up to 255 characters            |
 | **game**     | true     | [Object with game data](#single-game), see [Referring to a game](#referring-to-a-game) |
 | gameUrl      | false    | URL to fetch the full [game data](GamesAPIv1.md#single-game)        |
@@ -205,6 +208,8 @@ including the cancelled ones until their `time` passes, and drop everything olde
     "url": "https://your-site.com/api/events/1",
     "registration": {
         "contactsUrl": "https://your-site.com/api/events/1/contacts",
+        "teamsLeft": 18,
+        "placesLeft": 87,
         "teams": [
             { "id": 123, "name": "Vasilisy", "status": "confirmed", "players": 6 },
             { "id": 124, "name": "Cats", "status": "reserve", "players": 7 }
@@ -217,8 +222,8 @@ including the cancelled ones until their `time` passes, and drop everything olde
                 "format": "json",
                 "idempotent": true
             },
-            "maxTeams": 20,
-            "maxPlayers": 10,
+            "teamsCapacity": 20,
+            "guestsCapacity": 100,
             "fields": [
                 { "type": "text", "name": "team_name", "required": true, "title": "Team Name", "description": null, "max": 20 },
                 { "type": "textarea", "name": "comment", "required": false, "title": "Comment", "description": null, "max": 200 },
@@ -252,7 +257,7 @@ including the cancelled ones until their `time` passes, and drop everything olde
 |-----------------------------------|----------|---------|----------------------------------------------------------------|
 | **id**                            | **true** |         | Unique ID from your system                                     |
 | **type**                          | true     |         | Available values: "online", "offline"                          |
-| status                            | false    | active  | "active", "soldout" or "cancelled"                             |
+| status                            | false    | active  | "active", "reserve" or "soldout"                               |
 |                                   |          |         | See [Event status](#event-status)                              |
 | statusComment                     | false    | null    | Short note shown next to the event, up to 255 characters       |
 | **game**                          | true     |         | [Object with game data](#single-game), see below               |
@@ -271,8 +276,10 @@ including the cancelled ones until their `time` passes, and drop everything olde
 | **price.currency**                | true     |         | [ISO 4217](https://en.wikipedia.org/wiki/ISO_4217)             |
 | **price.per**                     | true     |         | Available values: "player", "team"                             |
 | registration                      | false    | null    | Null or object                                                 |
-| registration.form.maxTeams        | false    |         | Max number of teams                                            |
-| registration.form.maxPlayers      | false    |         | Max number of people the location can have                     |
+| registration.teamsLeft            | false    | null    | How many more teams can register, see [below](#how-many-places-are-left) |
+| registration.placesLeft           | false    | null    | How many more people can register, see [below](#how-many-places-are-left) |
+| registration.form.teamsCapacity   | false    |         | How many teams the event can take                              |
+| registration.form.guestsCapacity  | false    |         | How many people the venue can hold                             |
 | registration.contactsUrl          | false    | null    | URL we call to fetch the participants' email addresses         |
 |                                   |          |         | See [Participant contacts](#participant-contacts)              |
 | registration.teams                | false    |         | Described below                                                |
@@ -294,6 +301,36 @@ There is deliberately no email address in this object. This endpoint describes a
 request it often, and its URL is easy to guess — an address here would be one guessed URL away from
 a stranger. Addresses travel through
 [`registration.contactsUrl`](#participant-contacts) instead.
+
+### How many places are left
+
+`registration.teamsLeft` and `registration.placesLeft` say how much room the event still has: teams
+and people respectively, mirroring `form.teamsCapacity` and `form.guestsCapacity`. Both are
+optional. We show them on the listing — "2 places left" sells an event far better than silence does.
+
+```json
+{
+    "registration": {
+        "teamsLeft": 18,
+        "placesLeft": 87
+    }
+}
+```
+
+* **Null is not zero.** Leave a field out, or send `null`, when you do not publish that number. Zero
+  means the event really is full, so do not use it as a placeholder for "I don't know".
+* **Count the registrations that are still on** — `new`, `confirmed` and, if you keep them apart,
+  those already on the waiting list. Cancelled registrations free their places again.
+* **Send only what limits you.** If you cap teams but not people, send `teamsLeft` and leave
+  `placesLeft` out. Sending a number you do not actually enforce is worse than sending none.
+* **Zero belongs together with a status.** An event with `placesLeft: 0` and no `status` reads as a
+  contradiction: it claims to be full while still offering the main list. Set
+  [`status`](#event-status) to `reserve` — or, rarely, `soldout` — at the same time.
+
+This is a snapshot, and we know it: between reading your feed and the moment someone submits the
+form, the last place may be gone. Your registration endpoint stays the authority and is free to
+refuse a late registration with a `422`, or to accept it into the waiting list. We never treat these
+numbers as a promise.
 
 ### `registration.form.fields` description
 

@@ -33,8 +33,8 @@ You can find more details [here](EventsAPIv1.md#single-event)
                 "format": "json",
                 "idempotent": true
             },
-            "maxTeams": 20,
-            "maxPlayers": 10,
+            "teamsCapacity": 20,
+            "guestsCapacity": 100,
             "fields": [
                 { "type": "text", "name": "team_name", "required": true, "title": "Team Name", "description": null, "max": 20 },
                 { "type": "phone", "name": "phone", "required": true, "title": "Your phone", "description": null },
@@ -79,8 +79,8 @@ You can find more details [here](GamesAPIv1.md#single-game)
 | form                  | false    |         | You can provide it if you want us to send leads to you   |
 | form.openTime         | false    | now     | When the form becomes available. Formats are described   |
 |                       |          |         | in [Dates and times](EventsAPIv1.md#dates-and-times)     |
-| form.maxTeams         | false    |         | Maximum number of teams allowed to register              |
-| form.maxPlayers       | false    |         | Maximum number of people the location can have           |
+| form.teamsCapacity    | false    |         | How many teams the event can take                        |
+| form.guestsCapacity   | false    |         | How many people the venue can hold                       |
 | **form.endpoint**     | true     |         | Object describing the URL and format of our requests     |
 | **form.endpoint.url** | true     |         | URL of your site to which we'll send the requests        |
 | form.endpoint.method  | false    | POST    | HTTP method                                              |

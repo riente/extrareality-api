@@ -9,7 +9,7 @@ use JsonSerializable;
  * The form we show to the user, and the endpoint we send the filled-in data to.
  *
  * Lives under registration.form of an event and directly under form of a game, which is why the
- * team and player limits sit here rather than on the registration object.
+ * capacities sit here rather than on the registration object.
  *
  * @see https://github.com/riente/extrareality-api/blob/master/docs/FormObject.md
  */
@@ -23,8 +23,11 @@ class FormDTO implements JsonSerializable
      */
     public ?FormEndpointDTO $endpoint = null;
 
-    public ?int $maxTeams = null;
-    public ?int $maxPlayers = null;
+    /** How many teams the event can take */
+    public ?int $teamsCapacity = null;
+
+    /** How many people the venue can hold */
+    public ?int $guestsCapacity = null;
 
     /** @var array<FormFieldDTO> */
     public array $fields = [];
@@ -33,8 +36,8 @@ class FormDTO implements JsonSerializable
     {
         $this->openTime = $data['openTime'] ?? null;
         $this->endpoint = self::readEndpoint($data['endpoint'] ?? null);
-        $this->maxTeams = isset($data['maxTeams']) ? (int) $data['maxTeams'] : null;
-        $this->maxPlayers = isset($data['maxPlayers']) ? (int) $data['maxPlayers'] : null;
+        $this->teamsCapacity = isset($data['teamsCapacity']) ? (int) $data['teamsCapacity'] : null;
+        $this->guestsCapacity = isset($data['guestsCapacity']) ? (int) $data['guestsCapacity'] : null;
         $this->fields = self::readFields($data['fields'] ?? []);
     }
 
@@ -43,8 +46,8 @@ class FormDTO implements JsonSerializable
         return [
             'openTime' => $this->openTime,
             'endpoint' => $this->endpoint,
-            'maxTeams' => $this->maxTeams,
-            'maxPlayers' => $this->maxPlayers,
+            'teamsCapacity' => $this->teamsCapacity,
+            'guestsCapacity' => $this->guestsCapacity,
             'fields' => $this->fields,
         ];
     }
