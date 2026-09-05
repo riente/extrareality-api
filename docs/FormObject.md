@@ -1,4 +1,4 @@
-> **Languages:** English | Русский *(coming soon)*
+> **Languages:** English | [Русский](ru/FormObject.md)
 
 # ExtraReality APIs Form Object Description
 

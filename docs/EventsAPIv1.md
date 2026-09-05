@@ -1,4 +1,4 @@
-> **Languages:** English | Русский *(coming soon)*
+> **Languages:** English | [Русский](ru/EventsAPIv1.md)
 
 # ExtraReality Game Events API v1
 

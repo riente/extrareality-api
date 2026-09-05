@@ -1,4 +1,4 @@
-> **Languages:** English | Русский *(coming soon)*
+> **Languages:** English | [Русский](ru/RequestVerification.md)
 
 # ExtraReality APIs Request Verification
 

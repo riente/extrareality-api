@@ -1,4 +1,4 @@
-> **Languages:** English | Русский *(coming soon)*
+> **Languages:** English | [Русский](ru/Responses.md)
 
 # ExtraReality APIs Responses and Errors
 

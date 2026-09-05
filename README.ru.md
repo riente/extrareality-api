@@ -8,15 +8,15 @@
 
 | API | Статус | Описание | Документация |
 |-----|--------|----------|--------------|
-| Quest API v2 | **Рекомендуется** | Расписание, бронирование, отмена/обновление | [RU](docs/APIv2.md) · [EN](docs/en/APIv2.md) |
-| Quest API v1 | Устарело | Старое расписание и бронирование | [RU](docs/APIv1.md) |
+| EscapeRoom API v2 | **Рекомендуется** | Расписание, бронирование, отмена/обновление | [RU](docs/APIv2.md) · [EN](docs/en/APIv2.md) |
+| EscapeRoom API v1 | Устарело | Старое расписание и бронирование | [RU](docs/APIv1.md) · [EN](docs/en/APIv1.md) |
 
 ## API мероприятий и игр
 
 | API | Статус | Описание | Документация |
 |-----|--------|----------|--------------|
-| Events API v1 | Актуально | Квизы, мероприятия по расписанию, регистрации | [EN](docs/EventsAPIv1.md) |
-| Games API v1 | Актуально | Каталог игр и метаданные | [EN](docs/GamesAPIv1.md) |
+| Events API v1 | Актуально | Квизы, мероприятия по расписанию, регистрации | [EN](docs/EventsAPIv1.md) · [RU](docs/ru/EventsAPIv1.md) |
+| Games API v1 | Актуально | Каталог игр и метаданные | [EN](docs/GamesAPIv1.md) · [RU](docs/ru/GamesAPIv1.md) |
 
 ## Общие справочники
 
@@ -24,12 +24,12 @@
 
 | Тема | Документация |
 |------|--------------|
-| Проверка запросов (HMAC) | [EN](docs/RequestVerification.md) |
-| Коды ответов и ошибки | [EN](docs/Responses.md) |
-| Объект form (лиды) | [EN](docs/FormObject.md) |
+| Проверка запросов (HMAC) | [EN](docs/RequestVerification.md) · [RU](docs/ru/RequestVerification.md) |
+| Коды ответов и ошибки | [EN](docs/Responses.md) · [RU](docs/ru/Responses.md) |
+| Объект form (лиды) | [EN](docs/FormObject.md) · [RU](docs/ru/FormObject.md) |
 
 ## PHP-библиотека
 
-В этом репозитории также есть PHP-библиотека (`src/`). Она рассчитана на устаревший Quest API v1 и планируется к обновлению. Для новых интеграций используйте [Quest API v2](docs/APIv2.md).
+В этом репозитории также есть PHP-библиотека (`src/`).
 
 См. также [оглавление документации](docs/README.md).

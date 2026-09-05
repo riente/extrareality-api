@@ -1,4 +1,4 @@
-> **Languages:** English *(coming soon)* | Русский
+> **Languages:** [English](en/APIv1.md) | Русский
 
 Подробнее об API
 =======
