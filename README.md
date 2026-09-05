@@ -1,20 +1,35 @@
-Если вам зачем-то нужна предыдущая версия нашего API, то она описана [здесь](APIv1.md). Но использовать её мы не рекомендуем, лучше используйте последнюю.
-Соответственно, код API-клиента из данного репозитория тоже использовать смысла нет, т.к. он для старой версии API.
+# ExtraReality Partner APIs
 
-На данный момент библиотека морально устарела, и в обозримом будущем мы обновим её,
-но вам скорее всего интересно описание самого API, которое вполне актуально.
+> **Languages:** English | [Русский](README.ru.md)
 
-Подробнее об API
-=======
+Integration documentation for partners connecting their booking and event systems to ExtraReality.
 
-### Самая простая и последняя версия API для квестов (v2)
+## Quest booking APIs
 
-...описана [здесь](docs/APIv2.md). Если вы реализуете её, то всё у вас будет хорошо.
+| API               | Status | Description | Documentation |
+|-------------------|--------|-------------|---------------|
+| EscapeRoom API v2 | **Recommended** | Schedule, booking, cancel/update | [RU](docs/APIv2.md) · [EN](docs/en/APIv2.md) |
+| EscapeRoom API v1 | Deprecated | Legacy schedule & booking | [RU](docs/APIv1.md) |
 
-### Также у нас есть Events API
+## Events & games APIs
 
-Оно подходит для квизов, мероприятий и прочих игр по расписанию. Почитать можно [здесь](docs/EventsAPIv1.md)
+| API | Status | Description | Documentation |
+|-----|--------|-------------|---------------|
+| Events API v1 | Current | Quizzes, scheduled events, registrations | [EN](docs/EventsAPIv1.md) |
+| Games API v1 | Current | Game catalog & metadata | [EN](docs/GamesAPIv1.md) |
 
-### Первая (старая) версия API для квестов (расписание и бронирование)
+## Shared reference
 
-...описана [здесь](docs/APIv1.md). Не знаем, зачем она вам нужна, но оставляем возможность почитать и о ней.
+Used by Events API and Games API:
+
+| Topic | Documentation |
+|-------|---------------|
+| Request verification (HMAC) | [EN](docs/RequestVerification.md) |
+| Response codes & errors | [EN](docs/Responses.md) |
+| Form object (leads) | [EN](docs/FormObject.md) |
+
+## PHP client library
+
+This repository also contains a PHP helper library (`src/`).
+
+See also the [documentation index](docs/README.md).

@@ -1,3 +1,5 @@
+> **Languages:** English | Русский *(coming soon)*
+
 # ExtraReality APIs Request Verification
 
 This page describes how to make sure that a request to your endpoints really comes from us.

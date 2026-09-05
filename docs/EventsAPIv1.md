@@ -1,3 +1,5 @@
+> **Languages:** English | Русский *(coming soon)*
+
 # ExtraReality Game Events API v1
 
 This page is the contract between a **partner**, who publishes events, and **us** — one company

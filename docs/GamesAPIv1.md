@@ -1,3 +1,5 @@
+> **Languages:** English | Русский *(coming soon)*
+
 # ExtraReality Games API v1
 
 You can implement this API to provide us the information about your games.

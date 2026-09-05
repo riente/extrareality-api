@@ -1,3 +1,5 @@
+> **Languages:** English | Русский *(coming soon)*
+
 # ExtraReality APIs Responses and Errors
 
 This page describes what your endpoints should answer, and what we do with each kind of answer.

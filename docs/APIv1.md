@@ -1,3 +1,5 @@
+> **Languages:** English *(coming soon)* | Русский
+
 Подробнее об API
 =======
 
