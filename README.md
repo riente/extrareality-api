@@ -9,7 +9,6 @@ Integration documentation for partners connecting their booking and event system
 | API               | Status | Description | Documentation |
 |-------------------|--------|-------------|---------------|
 | EscapeRoom API v2 | **Recommended** | Schedule, booking, cancel/update | [RU](docs/APIv2.md) · [EN](docs/en/APIv2.md) |
-| EscapeRoom API v1 | Deprecated | Legacy schedule & booking | [RU](docs/APIv1.md) · [EN](docs/en/APIv1.md) |
 
 ## Events & games APIs
 

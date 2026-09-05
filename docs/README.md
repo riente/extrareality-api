@@ -7,7 +7,6 @@
 | API | Status | Documentation |
 |-----|--------|---------------|
 | EscapeRoom API v2 | **Recommended** | [RU](APIv2.md) · [EN](en/APIv2.md) |
-| EscapeRoom API v1 | Deprecated | [RU](APIv1.md) · [EN](en/APIv1.md) |
 
 ## Events & games APIs
 
